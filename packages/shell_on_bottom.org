@@ -13,7 +13,7 @@ I guess we'll also have to rename it to regexp-buffer-on-side-mode :^).
 This automatically inserts this package into the ~.emacs~ generated
 during the installation process in ~emacs-init.org~.
 
-#+begin_src emacs-lisp :mkdirp yes :tangle (when lensor-init/use-every-package ../.emacs)
+#+begin_src emacs-lisp :mkdirp yes :tangle (when emacs-init/use-every-package ../.emacs)
   (use-package shell-on-bottom
     :pin manual
     :ensure nil

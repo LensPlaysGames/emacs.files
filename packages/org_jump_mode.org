@@ -26,7 +26,7 @@ with the use of custom vars, keybindings, advices, and the mode hook.
 
 ** use-package
 
-#+begin_src emacs-lisp :mkdirp yes :tangle (when lensor-init/use-every-package ../.emacs)
+#+begin_src emacs-lisp :mkdirp yes :tangle (when emacs-init/use-every-package ../.emacs)
   (use-package org-jump
     :pin manual
     :ensure nil

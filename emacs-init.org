@@ -224,9 +224,6 @@ to the global load path, meaning Elisp may be loaded from them.
     :defer nil
     :config
     (auto-compile-on-load-mode))
-
-  ;;; Load user-specific Initialization
-  (load (expand-file-name "my-init" user-emacs-directory) t)
 #+end_src
 
 **** Load ~my-init~
@@ -241,9 +238,9 @@ initialization per each machine/user of this Emacs config.
 
 *** Packages
 
-NOTE: The packages in the ~packages~ subdirectory are automatically
-used by default. Exclude them by defining
-~lensor-init/use-every-package~ to nil.
+NOTE: The packages in the ~packages~ subdirectory automatically
+include themselves by default. \
+Exclude them by defining ~emacs-init/use-every-package~ to nil.
 
 #+begin_src emacs-lisp :mkdirp yes :tangle .emacs
   ;;; icomplete-vertical
@@ -721,6 +718,6 @@ This uses the built-in ~zone~ package.
 
 ** Local Variables
 
-# Local Variables:                ***
-# lensor-init/use-every-package:t ***
-# End:                            ***
+# Local Variables:               ***
+# emacs-init/use-every-package:t ***
+# End:                           ***
