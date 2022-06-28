@@ -133,18 +133,9 @@ Execute source block under point in ~org-mode~ using ~org-babel~:
   ;;; Code:
 #+end_src
 
-*** Early
+*** Performance tweaks
 
 #+begin_src emacs-lisp :mkdirp yes :tangle .emacs
-  ;;;; Early
-
-  ;; Disable unnecessary GUI elements.
-  (menu-bar-mode -1)
-  (tool-bar-mode -1)
-  (scroll-bar-mode -1)
-  (setq inhibit-splash-screen t)
-  (setq use-file-dialog nil)
-
   ;; Delay garbage collection until after startup.
   (setq gc-cons-threshold-at-startup gc-cons-threshold)
   (setq gc-cons-threshold 104857600)
@@ -156,9 +147,13 @@ Execute source block under point in ~org-mode~ using ~org-babel~:
   ;; Restore garbage collection threshold after startup.
   (add-hook 'emacs-startup-hook 'lens/restore-gc-cons-threshold)
 
-  ;; Have Emacs open in fullscreen, no window frame.
-  ;; NOTE: This may break tools that use new frames (like `ediff`).
-  (add-to-list 'default-frame-alist '(fullscreen . fullscreen))
+  ;; Prevent unwanted runtime builds in gccemacs (native-comp); packages are
+  ;; compiled ahead-of-time when they are installed and site files are compiled
+  ;; when gccemacs is installed.
+  (setq comp-deferred-compilation nil)
+
+  ;; Fix for font-based performance issues (this fixes custom FontForge fonts lagging heavily).
+  (setq inhibit-compacting-font-caches t)
 
   ;; Prevent unnecessary regexp matching when loading files from .emacs.
   (setq file-name-handler-alist-at-startup file-name-handler-alist)
@@ -168,19 +163,44 @@ Execute source block under point in ~org-mode~ using ~org-babel~:
             (lambda ()
               (setq file-name-handler-alist
                     file-name-handler-alist-at-startup)))
+#+end_src
 
+*** Early
+
+**** Open New Frames in Fullscreen
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  ;; Have Emacs open in fullscreen, no window frame.
+  ;; NOTE: This may break tools that use new frames (like `ediff`).
+  (add-to-list 'default-frame-alist '(fullscreen . fullscreen))
+#+end_src
+
+**** Extend lisp source directories
+
+Add ~lisp~ and ~external_lisp~ subdirectories of ~user-emacs-directory~
+to the global load path, meaning Elisp may be loaded from them.
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  ;; Add ability to load files from `~/.emacs.d/lisp` and `~/.emacs.d/external_lisp`.
   (add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
   (add-to-list 'load-path (expand-file-name "external_lisp" user-emacs-directory))
+#+end_src
 
-  ;; Prevent unwanted runtime builds in gccemacs (native-comp); packages are
-  ;; compiled ahead-of-time when they are installed and site files are compiled
-  ;; when gccemacs is installed.
-  (setq comp-deferred-compilation nil)
+**** Disable unnecessary GUI elements
 
-  ;; Fix for font-based performance issues (this fixes custom FontForge fonts lagging heavily).
-  (setq inhibit-compacting-font-caches t)
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  ;; Disable unnecessary GUI elements.
+  (menu-bar-mode -1)
+  (tool-bar-mode -1)
+  (scroll-bar-mode -1)
+  (setq inhibit-splash-screen t)
+  (setq use-file-dialog nil)
+#+end_src
 
-  ;;;; Initialize package management
+**** Initialize Package Management
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  ;;; Initialize package management
 
   (eval-when-compile
     (require 'package)
@@ -200,9 +220,22 @@ Execute source block under point in ~org-mode~ using ~org-babel~:
     (require 'bind-key))
 
   ;; Automatically compile Elisp files for all da speedz.
-  (use-package auto-compile)
+  (use-package auto-compile
+    :defer nil
+    :config
+    (auto-compile-on-load-mode))
 
-  ;;;; Load user-specific Initialization
+  ;;; Load user-specific Initialization
+  (load (expand-file-name "my-init" user-emacs-directory) t)
+#+end_src
+
+**** Load ~my-init~
+
+~my-init~ is tangled from ~my-init.org~, and contains custom
+initialization per each machine/user of this Emacs config.
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  ;;; Load user-specific Initialization
   (load (expand-file-name "my-init" user-emacs-directory) t)
 #+end_src
 
@@ -338,7 +371,9 @@ used by default. Exclude them by defining
     (setq esup-depth 0))
 #+end_src
 
-*** Language Support
+**** Language Support
+
+***** Assembly
 
 #+begin_src emacs-lisp :mkdirp yes :tangle .emacs
   ;;; GNU Assembly (GAS)
@@ -357,6 +392,19 @@ used by default. Exclude them by defining
   ;; Add .emacs to auto-mode-alist.
   (add-to-list 'auto-mode-alist '("\\.emacs\\'" . emacs-lisp-mode))
 
+  ;;; Netwide Assembly (NASM)
+  ;; https://nasm.us/
+  (use-package nasm-mode
+    :bind
+    (:map nasm-mode-map
+          (";" . self-insert-command))
+    :mode
+    ("\\.nasm\\|.asm\\'" . nasm-mode))
+#+end_src
+
+***** Markdown
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
   ;;; Markdown
   ;; Major mode for editing Markdown.
   ;; https://github.com/jrblevin/markdown-mode
@@ -371,28 +419,33 @@ used by default. Exclude them by defining
     :custom-face
     (markdown-code-face ((t (:inherit default)))))
 
+#+end_src
+
+***** Meson
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
   ;;; Meson build files
   ;; https://mesonbuild.com/
   ;; https://github.com/mesonbuild/meson
   (use-package meson-mode
     :mode
     ("\\meson.build\\|.meson\\'" . meson-mode))
+#+end_src
 
-  ;;; Netwide Assembly (NASM)
-  ;; https://nasm.us/
-  (use-package nasm-mode
-    :bind
-    (:map nasm-mode-map
-          (";" . self-insert-command))
-    :mode
-    ("\\.nasm\\|.asm\\'" . nasm-mode))
+***** Rust
 
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
   ;;; Rust
   ;; https://www.rust-lang.org/
   (use-package rust-mode
     :mode
     ("\\.rs\\'" . rust-mode))
 
+#+end_src
+
+***** Zig
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
   ;;; Zig
   ;; https://ziglang.org/
   (use-package zig-mode
@@ -400,7 +453,9 @@ used by default. Exclude them by defining
     ("\\.zig\\'" . zig-mode))
 #+end_src
 
-*** A e s t h e t i c
+**** A e s t h e t i c
+
+***** Fixed-pitch Fix
 
 I hate how fixed-pitch fonts look in Emacs, and it isn't needed when
 using a monospace font, anyway.
@@ -421,6 +476,8 @@ using a monospace font, anyway.
    :background 'unspecified)
 #+end_src
 
+***** Smooth Scrolling
+
 Smoother scrolling in newer versions of Emacs.
 
 #+begin_src emacs-lisp :mkdirp yes :tangle .emacs
@@ -437,7 +494,7 @@ Smoother scrolling in newer versions of Emacs.
     (keymap-global-set "M-v" 'pixel-scroll-interpolate-up))
 #+end_src
 
-C++ syntax highlighting for integer size qualifiers.
+***** C++ Integer Qualifier Highlighting
 
 #+begin_src emacs-lisp :mkdirp yes :tangle .emacs
   ;;; modern-cpp-font-lock
@@ -467,7 +524,7 @@ C++ syntax highlighting for integer size qualifiers.
     (setq modern-c++-font-lock-literal-integer nil))
 #+end_src
 
-CMake syntax highlighting.
+***** CMake Syntax Highlighting
 
 #+begin_src emacs-lisp :mkdirp yes :tangle .emacs
   ;;; cmake-font-lock
@@ -477,9 +534,10 @@ CMake syntax highlighting.
     :defer t)
 #+end_src
 
-EShell syntax highlighting: If a command is valid, it's green. If not,
-it's red. It's unbelievable how useful and valuable this simple feature
-is.
+***** EShell Syntax Highlighting
+
+If a command is valid, it's green. If not, it's red. It's unbelievable
+how useful and valuable this simple feature is.
 
 #+begin_src emacs-lisp :mkdirp yes :tangle .emacs
   ;;; eshell-syntax-highlighting
@@ -492,7 +550,7 @@ is.
     (eshell-prompt ((t (:foreground "#7c8085")))))
 #+end_src
 
-
+***** Centered Text Body
 
 #+begin_src emacs-lisp :mkdirp yes :tangle .emacs
   ;;; olivetti
@@ -504,7 +562,7 @@ is.
     (olivetti-body-width 88))
 #+end_src
 
-*** Meaningless Fun
+**** Meaningless Fun
 
 2048, but implemented entirely in Emacs!
 
@@ -524,6 +582,8 @@ Emacs has a +yule-log+ mode-line burning, and it smells like napalm!
     :defer t
     :commands (fireplace))
 #+end_src
+
+***** Zone Out
 
 Zone out after three minutes!
 This uses the built-in ~zone~ package.
@@ -565,16 +625,8 @@ This uses the built-in ~zone~ package.
 *** Late
 
 #+begin_src emacs-lisp :mkdirp yes :tangle .emacs
-  ;; Display compilation buffer in a thin side window on the very right.
-  (add-to-list
-   'display-buffer-alist
-   `("\\*compilation\\*"
-     (display-buffer-in-side-window)
-     (window-width . 42)
-     (side . right)
-     (slot . 1)
-     (window-parameters
-      (mode-line-format . ("" " %b")))))
+  ;; Show trailing whitespace highlighted in red.
+  (setq show-trailing-whitespace t)
 
   ;; Auto-revert to disk on file change globally.
   (global-auto-revert-mode t)
@@ -599,21 +651,8 @@ This uses the built-in ~zone~ package.
   (setq comint-input-ring-size 1024)
   (setq eshell-history-size 1024)
 
-  ;; Scroll `*compilation*` buffer automatically.
-  (setq compilation-scroll-output t)
-
   ;; Disable undo in shell mode.
   (add-hook 'shell-mode-hook 'buffer-disable-undo)
-
-  ;; Show startup time.
-  (add-hook 'emacs-startup-hook
-            (lambda ()
-              (princ
-               (format
-                "Emacs loaded in %s with %d garbage collections."
-                (format "%.2fs" (float-time (time-subtract after-init-time before-init-time)))
-                gcs-done))
-              ))
 
   ;; Disable built-in parentheses highlighting.
   (setq show-paren-mode nil)
@@ -623,6 +662,40 @@ This uses the built-in ~zone~ package.
 
   ;; Disable built-in version control (Magit is enough)
   (setq vc-handled-backends nil)
+#+end_src
+
+**** Report Startup Time
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  ;; Show startup time.
+  (add-hook 'emacs-startup-hook
+            (lambda ()
+              (message "Emacs loaded in %s with %d garbage collections."
+                       (format "%.2fs" (float-time (time-subtract after-init-time before-init-time)))
+                       gcs-done)))
+#+end_src
+
+**** Compilation
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  ;; Display compilation buffer in a thin side window on the very right.
+  (add-to-list
+   'display-buffer-alist
+   `("\\*compilation\\*"
+     (display-buffer-in-side-window)
+     (window-width . 42)
+     (side . right)
+     (slot . 1)
+     (window-parameters
+      (mode-line-format . ("" " %b")))))
+
+  ;; Scroll `*compilation*` buffer automatically.
+  (setq compilation-scroll-output t)
+#+end_src
+
+**** Customize Emacs file backups
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
 
   ;; Save all backups in `~/.emacs.d/backup/` directory.
   (setq backup-directory-alist '(("." . "~/.emacs.d/backup"))
@@ -632,6 +705,19 @@ This uses the built-in ~zone~ package.
         kept-new-versions 15
         kept-old-versions 10)
 #+end_src
+
+**** Set default file encoding (UTF-8)
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  ;; Default file encoding of UTF-8.
+  (set-language-environment "UTF-8")
+  (prefer-coding-system       'utf-8)
+  (set-default-coding-systems 'utf-8)
+  (set-terminal-coding-system 'utf-8)
+  (set-keyboard-coding-system 'utf-8)
+  (setq default-buffer-file-coding-system 'utf-8)
+#+end_src
+
 
 ** Local Variables
 
