@@ -1,0 +1,640 @@
+#+title: Lens' Emacs Configuration
+#+author: Rylan Lens Kellogg
+#+description: A literate Emacs configuration file.
+#+created: <2022-06-26 Sun>
+#+startup: content
+
+** EmacsClient
+
+While everything possible is done to reduce startup/load times,
+there is a newer feature of Emacs that allows for near-instant startup.
+It would be kind of silly to not take advantage of it.
+
+That feature is ~emacsclient~.
+
+Use the following command to launch Emacs instead of the regular way;
+it will connect to an existing server, or create one if it doesn't exist.
+
+#+begin_src shell :results none
+  emacsclient -n -c -a ""
+#+end_src
+
+This works amazingly, allowing for near-instantaneous opening of Emacs after the first time.
+
+On Windows, use ~emacsclientw.exe~, and create a shortcut to it with the arguments listed above.
+
+
+** CapsLock to Ctrl rebind
+
+I don't use this on my desktop, but on laptops I prefer this keybinding.
+
+I use Windows, so AutoHotkey seems like my best solution.
+
+See [[https://www.devdungeon.com/content/rebind-caps-lock-key-escapecontrol#toc-3][this page]] for help on other platforms.
+
+Here's the autohotkey script I use.
+#+begin_src text :tangle no
+  Capslock::LCtrl
+#+end_src
+
+
+** Installation
+
+To install the new configuration, and backup the old one in
+the ~backup~ subdirectory, evaluate the following within Emacs.
+
+Execute source block under point in ~org-mode~ using ~org-babel~:
+- ~C-c C-c~
+- ~C-c C-v C-e~
+- ~M-x org-babel-execute-maybe RET~
+
+#+name: install
+#+begin_src emacs-lisp :dir . :results none
+  ;; Backup current Emacs configuration (only things that may be over-written).
+  (message "Backing up current config...")
+  (let* ((time-string (format-time-string "%Y-%m-%d-%H-%M-%S"))
+         (backup-dir (expand-file-name time-string "backup"))
+         (custom-user-init-file (expand-file-name "my-init.el" user-emacs-directory)))
+    (message "Backing up Emacs configuration to %s..." backup-dir)
+    (make-directory backup-dir t)
+    ;; The user init file isn't present on a fresh Emacs.
+    (when (file-exists-p user-init-file)
+      (copy-file user-init-file (expand-file-name ".emacs" backup-dir)))
+    (when (file-exists-p custom-user-init-file)
+      (copy-file custom-user-init-file (expand-file-name "my-init.el" backup-dir) t))
+    (copy-directory user-emacs-directory
+                    (expand-file-name ".emacs.d" backup-dir)
+                    nil t t))
+  (message "Tangling into Elisp...")
+  (let ((generated-files (append
+                          (org-babel-tangle-file "my-init.org")
+                          (org-babel-tangle-file "emacs-init.org")))
+        (generated-packages (mapcar (lambda (file-path) (org-babel-tangle-file file-path))
+                                    (directory-files "packages" t "\\.org$")))
+        (generated-themes (mapcar (lambda (file-path) (org-babel-tangle-file file-path))
+                                  (directory-files "themes" t "\\.org$"))))
+    (message "Installing new configuration...")
+
+    ;; Copy user init files.
+    (copy-file ".emacs" user-init-file t)
+    (copy-file "my-init.el" (expand-file-name "my-init.el" user-emacs-directory) t)
+
+    (message "Installing packages...")
+    (dolist (package (directory-files "packages" t "\\.el$"))
+      (let ((package-install-path (expand-file-name
+                                   (file-name-nondirectory package)
+                                   (expand-file-name "lisp" user-emacs-directory))))
+        (copy-file package package-install-path)
+        (byte-compile-file package-install-path)
+        ))
+    (dolist (generated-package generated-packages)
+      (when (file-exists-p generated-package)
+        (let ((package-install-path (expand-file-name
+                                     (file-name-nondirectory generated-package)
+                                     (expand-file-name "lisp" user-emacs-directory))))
+          (copy-file generated-package package-install-path)
+          (when (string-suffix-p ".el" package-install-path)
+            (byte-compile-file package-install-path))
+          )))
+
+    (message "Installing themes...")
+    (dolist (theme (directory-files "themes" t "\\.el$"))
+      (let ((theme-install-path (expand-file-name
+                                 (file-name-nondirectory theme)
+                                 user-emacs-directory)))
+        (copy-file theme theme-install-path)))
+    (dolist (generated-theme generated-themes)
+      (when (file-exists-p generated-theme)
+        (let ((theme-install-path
+               (expand-file-name
+                (file-name-nondirectory generated-theme)
+                user-emacs-directory)))
+          (copy-file generated-theme theme-install-path))))
+
+    (message "Cleaning generated files...")
+    (dolist (generated-file (append generated-files generated-packages generated-themes))
+      (when (file-exists-p generated-file)
+        (delete-file generated-file))))
+
+  (when (y-or-n-p "Load new configuration?")
+    (load user-init-file)))
+
+#+end_src
+
+** ~.emacs~
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  ;;; .emacs --- Rylan Lens Kellogg GNU Emacs 29.0.50 configuration file -*- lexical-binding: t; -*-
+
+  ;;; Commentary:
+
+  ;; This file was generated automatically from a literate Emacs configuration.
+
+  ;;; Code:
+#+end_src
+
+*** Early
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  ;;;; Early
+
+  ;; Disable unnecessary GUI elements.
+  (menu-bar-mode -1)
+  (tool-bar-mode -1)
+  (scroll-bar-mode -1)
+  (setq inhibit-splash-screen t)
+  (setq use-file-dialog nil)
+
+  ;; Delay garbage collection until after startup.
+  (setq gc-cons-threshold-at-startup gc-cons-threshold)
+  (setq gc-cons-threshold 104857600)
+  (defun lens/restore-gc-cons-threshold ()
+    "Restore 'gc-cons-threshold' variable to 'gc-cons-threshold-at-startup'."
+    (setq gc-cons-threshold gc-cons-threshold-at-startup)
+    (message "gc-cons-threshold restored to %S"
+             gc-cons-threshold))
+  ;; Restore garbage collection threshold after startup.
+  (add-hook 'emacs-startup-hook 'lens/restore-gc-cons-threshold)
+
+  ;; Have Emacs open in fullscreen, no window frame.
+  ;; NOTE: This may break tools that use new frames (like `ediff`).
+  (add-to-list 'default-frame-alist '(fullscreen . fullscreen))
+
+  ;; Prevent unnecessary regexp matching when loading files from .emacs.
+  (setq file-name-handler-alist-at-startup file-name-handler-alist)
+  (setq file-name-handler-alist nil)
+  ;; Restore file-name-handler-alist after startup.
+  (add-hook 'emacs-startup-hook
+            (lambda ()
+              (setq file-name-handler-alist
+                    file-name-handler-alist-at-startup)))
+
+  (add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
+  (add-to-list 'load-path (expand-file-name "external_lisp" user-emacs-directory))
+
+  ;; Prevent unwanted runtime builds in gccemacs (native-comp); packages are
+  ;; compiled ahead-of-time when they are installed and site files are compiled
+  ;; when gccemacs is installed.
+  (setq comp-deferred-compilation nil)
+
+  ;; Fix for font-based performance issues (this fixes custom FontForge fonts lagging heavily).
+  (setq inhibit-compacting-font-caches t)
+
+  ;;;; Initialize package management
+
+  (eval-when-compile
+    (require 'package)
+    (setq load-prefer-newer t)
+    (setq package-enable-at-startup nil)
+    (setq package-archives '(("gnu" . "https://elpa.gnu.org/packages/")
+                             ("melpa" . "https://melpa.org/packages/")
+                             ("org" . "https://orgmode.org/elpa/")))
+    (package-initialize)
+    ;; use-package bootstrap
+    (unless (package-installed-p 'use-package)
+      (package-refresh-contents)
+      (package-install 'use-package))
+    (require 'use-package)
+    (setq use-package-always-ensure t)
+    ;; use-package depends on bind-key if :bind is used.
+    (require 'bind-key))
+
+  ;; Automatically compile Elisp files for all da speedz.
+  (use-package auto-compile)
+
+  ;;;; Load user-specific Initialization
+  (load (expand-file-name "my-init" user-emacs-directory) t)
+#+end_src
+
+*** Packages
+
+NOTE: The packages in the ~packages~ subdirectory are automatically
+used by default. Exclude them by defining
+~lensor-init/use-every-package~ to nil.
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  ;;; icomplete-vertical
+  ;; Vertical completions in the minibuffer.
+  ;; https://github.com/oantolin/icomplete-vertical
+  (use-package icomplete-vertical
+    :demand t
+    :bind
+    (:map icomplete-minibuffer-map
+          ("<down>"     . icomplete-forward-completions)
+          ("C-n"        . icomplete-forward-completions)
+          ("<up>"       . icomplete-backward-completions)
+          ("C-p"        . icomplete-backward-completions)
+          ("<C-tab>"    . icomplete-force-complete)
+          ("<C-return>" . icomplete-force-complete-and-exit))
+    :custom-face
+    (icomplete-first-match
+     ((t (:inherit font-lock-string-face))))
+    (completions-first-difference
+     ((t (:inherit font-lock-string-face))))
+    :custom
+    (completion-styles '(partial-completion substring))
+    (completion-category-overrides '((file (styles basic substring))))
+    (read-file-name-completion-ignore-case t)
+    (read-buffer-completion-ignore-case t)
+    (completion-ignore-case t)
+    :config
+    (icomplete-mode)
+    (icomplete-vertical-mode))
+
+  ;;; multiple-cursors
+  ;; Create multiple cursors within a single buffer.
+  ;; https://github.com/magnars/multiple-cursors.el
+  (use-package multiple-cursors
+    :bind
+    (("C->"           . mc/mark-next-like-this)
+     ("C-<"           . mc/mark-previous-like-this)
+     ("C-?"           . mc/mark-all-like-this)
+     ("<C-M-mouse-1>" . mc/add-cursor-on-click)))
+
+  ;;; eglot
+  ;; Language server protocol interface.
+  ;; Simple and fairly non-intrusive.
+  ;; https://github.com/joaotavora/eglot
+  (use-package eglot
+    :hook
+    ((c-mode
+      c++-mode
+      cmake-mode)
+     . eglot-ensure)
+    :custom
+    (eglot-send-changes-idle-time 0))
+
+  ;;; magit
+  ;; Magic git integration.
+  ;; https://magit.vc/
+  (use-package magit
+    :defer t)
+
+  ;;; smartparens
+  ;; I use this over the built-in `electric-pair-mode` due to it
+  ;; automatically handling escaped characters within pairs very well.
+  ;; https://github.com/Fuco1/smartparens
+  (use-package smartparens
+    :config
+    (smartparens-global-mode t))
+
+  ;;; which-key
+  ;; When a key chord is pressed but not yet completed, a list of completions is shown.
+  ;; https://github.com/justbur/emacs-which-key
+  (use-package which-key
+    :config
+    (which-key-mode t))
+
+  ;;; yasnippet
+  ;; Insert templated snippets of text at point.
+  (use-package yasnippet-snippets
+    :defer t)
+  (use-package yasnippet
+    :defer t
+    :bind
+    (("C-'" . yas-insert-snippet))
+    :config
+    (yas-global-mode 1))
+
+  ;;; move-text
+  ;; Move a line or region of text up or down through a file.
+  ;; I only ever use it to move single lines, but it is very helpful.
+  ;; NOTE: org-mode shadows these keybindings, so maybe choose
+  ;; something else? Or just bind other keys in org-mode.
+  ;; https://github.com/emacsfodder/move-text
+  (use-package move-text
+    :bind
+    (("M-p" . 'move-text-up)
+     ("M-n" . 'move-text-down))
+    )
+
+  ;; TODO and FIXME highlighting.
+  ;; https://github.com/lewang/fic-mode
+  (use-package fic-mode
+    :hook
+    ((prog-mode) . fic-mode)
+    :custom-face
+    (fic-face
+     ((t (:background
+          nil
+          :foreground
+          nil
+          :underline
+          (:color "red" :style wave)
+          )))))
+
+  ;;; uptimes
+  ;; Record Emacs session uptimes.
+  (use-package uptimes)
+
+  ;;; esup
+  ;; Emacs startup should be fast! But why is it slow? Hard to know.
+  ;; That's where esup comes in handy: The Emacs StartUp Profiler.
+  ;; Thanks to https://github.com/jschaf/esup/issues/54#issuecomment-651247749
+  ;; https://github.com/jschaf/esup
+  (use-package esup
+    :commands esup
+    :config
+    (setq esup-depth 0))
+#+end_src
+
+*** Language Support
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  ;;; GNU Assembly (GAS)
+  ;; asm-mode is a built-in, but it has a terrible,
+  ;; terrible comment command that must be rebound.
+  (use-package asm-mode
+    :pin manual
+    :ensure nil
+    :bind
+    (:map asm-mode-map
+          (";" . nil)
+          (":" . self-insert-command))
+    :mode
+    ("\\.s\\|.S\\'" . asm-mode))
+  ;; The above regexp matches .emacs, we have to explicitly handle it.
+  ;; Add .emacs to auto-mode-alist.
+  (add-to-list 'auto-mode-alist '("\\.emacs\\'" . emacs-lisp-mode))
+
+  ;;; Markdown
+  ;; Major mode for editing Markdown.
+  ;; https://github.com/jrblevin/markdown-mode
+  (use-package markdown-mode
+    :mode
+    ("\\.md\\'" . gfm-mode)
+    :hook
+    ((markdown-mode) .
+     (lambda ()
+       outline-minor-mode
+       ))
+    :custom-face
+    (markdown-code-face ((t (:inherit default)))))
+
+  ;;; Meson build files
+  ;; https://mesonbuild.com/
+  ;; https://github.com/mesonbuild/meson
+  (use-package meson-mode
+    :mode
+    ("\\meson.build\\|.meson\\'" . meson-mode))
+
+  ;;; Netwide Assembly (NASM)
+  ;; https://nasm.us/
+  (use-package nasm-mode
+    :bind
+    (:map nasm-mode-map
+          (";" . self-insert-command))
+    :mode
+    ("\\.nasm\\|.asm\\'" . nasm-mode))
+
+  ;;; Rust
+  ;; https://www.rust-lang.org/
+  (use-package rust-mode
+    :mode
+    ("\\.rs\\'" . rust-mode))
+
+  ;;; Zig
+  ;; https://ziglang.org/
+  (use-package zig-mode
+    :mode
+    ("\\.zig\\'" . zig-mode))
+#+end_src
+
+*** A e s t h e t i c
+
+I hate how fixed-pitch fonts look in Emacs, and it isn't needed when
+using a monospace font, anyway.
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  ;;; Fixed-pitch face fix
+  (set-face-attribute
+   'fixed-pitch nil
+   :family 'unspecified
+   :foundry 'unspecified
+   :foreground 'unspecified
+   :background 'unspecified)
+  (set-face-attribute
+   'fixed-pitch-serif nil
+   :family 'unspecified
+   :foundry 'unspecified
+   :foreground 'unspecified
+   :background 'unspecified)
+#+end_src
+
+Smoother scrolling in newer versions of Emacs.
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  ;; Smoother scrolling on newer Emacs
+  ;; TODO: Test out `good-scroll.el`
+  (when (>= emacs-major-version 29)
+    (pixel-scroll-mode t)
+    (pixel-scroll-precision-mode t)
+    (push 2 mouse-wheel-scroll-amount)
+    (setq mouse-wheel-progressive-speed nil)
+    (setq pixel-resolution-fine-flag t)
+    (setq pixel-dead-time 0.16)
+    (keymap-global-set "C-v" 'pixel-scroll-interpolate-down)
+    (keymap-global-set "M-v" 'pixel-scroll-interpolate-up))
+#+end_src
+
+C++ syntax highlighting for integer size qualifiers.
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  ;;; modern-cpp-font-lock
+  ;; Better syntax highlighting for C++ source code.
+  ;; TODO: Leverage infix face for constants like `nullptr`.
+  ;; https://github.com/ludwigpacifici/modern-cpp-font-lock
+  (defface modern-c++-integer-base-face
+    `((t (:foreground "#47afff")))
+    "The face that will highlight things like `0x`, `0b`, `ull`, etc.")
+  (use-package modern-cpp-font-lock
+    :hook
+    ((c++-mode) . #'modern-c++-font-lock-mode)
+    :custom
+    (modern-c++-literal-binary-prefix-face 'modern-c++-integer-base-face)
+    (modern-c++-literal-octal-prefix-face 'modern-c++-integer-base-face)
+    (modern-c++-literal-dec-prefix-face 'modern-c++-integer-base-face)
+    (modern-c++-literal-hex-prefix-face 'modern-c++-integer-base-face)
+    ;;(modern-c++-literal-binary-infix-face 'modern-c++-integer-base-face)
+    ;;(modern-c++-literal-octal-infix-face 'modern-c++-integer-base-face)
+    ;;(modern-c++-literal-dec-infix-face 'modern-c++-integer-base-face)
+    ;;(modern-c++-literal-hex-infix-face 'modern-c++-integer-base-face)
+    (modern-c++-literal-binary-suffix-face 'modern-c++-integer-base-face)
+    (modern-c++-literal-octal-suffix-face 'modern-c++-integer-base-face)
+    (modern-c++-literal-dec-suffix-face 'modern-c++-integer-base-face)
+    (modern-c++-literal-hex-suffix-face 'modern-c++-integer-base-face)
+    :config
+    (setq modern-c++-font-lock-literal-integer nil))
+#+end_src
+
+CMake syntax highlighting.
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  ;;; cmake-font-lock
+  ;; Better syntax highlighting for CMake scripts.
+  ;; https://github.com/Lindydancer/cmake-font-lock
+  (use-package cmake-font-lock
+    :defer t)
+#+end_src
+
+EShell syntax highlighting: If a command is valid, it's green. If not,
+it's red. It's unbelievable how useful and valuable this simple feature
+is.
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  ;;; eshell-syntax-highlighting
+  ;; Syntax highlight commands on the EShell command line.
+  ;; https://github.com/akreisher/eshell-syntax-highlighting
+  (use-package eshell-syntax-highlighting
+    :hook
+    ((eshell-mode) . eshell-syntax-highlighting-mode)
+    :custom-face
+    (eshell-prompt ((t (:foreground "#7c8085")))))
+#+end_src
+
+
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  ;;; olivetti
+  ;; Move the body of text of a window to the center; good for writing vs code.
+  ;; https://github.com/rnkn/olivetti
+  (use-package olivetti
+    :commands olivetti-mode
+    :custom
+    (olivetti-body-width 88))
+#+end_src
+
+*** Meaningless Fun
+
+2048, but implemented entirely in Emacs!
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  ;; 2048 -- like that phone game
+  (use-package 2048-game
+    :defer t
+    :commands (2048-game))
+#+end_src
+
+Emacs has a +yule-log+ mode-line burning, and it smells like napalm!
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  ;; A cozy fireplace for Emacs
+  ;; https://github.com/johanvts/emacs-fireplace/
+  (use-package fireplace
+    :defer t
+    :commands (fireplace))
+#+end_src
+
+Zone out after three minutes!
+This uses the built-in ~zone~ package.
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  (use-package zone-rainbow
+    :defer t
+    :commands (zone-pgm-rainbow))
+  (use-package zone-sl
+    :defer t
+    :commands (zone-pgm-sl))
+  (use-package zone
+    :pin manual
+    :config
+    (defun zone-choose (pgm)
+      "Choose a zone program to run from zone-programs list."
+      (interactive
+       (list
+        (completing-read
+         "Program: "
+         (mapcar 'symbol-name zone-programs))))
+      (let ((zone-programs (list (intern pgm))))
+        (zone)))
+    ;; Use a subset of the default programs.
+    (setq zone-programs
+          [zone-pgm-drip
+           zone-pgm-explode
+           zone-pgm-paragraph-spaz
+           zone-pgm-putz-with-case
+           zone-pgm-2nd-putz-with-case
+           zone-pgm-rainbow
+           zone-pgm-stress-destress
+           zone-pgm-sl])
+    ;; After three minutes of being idle, zone out.
+    (zone-when-idle 180))
+#+end_src
+
+
+*** Late
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  ;; Display compilation buffer in a thin side window on the very right.
+  (add-to-list
+   'display-buffer-alist
+   `("\\*compilation\\*"
+     (display-buffer-in-side-window)
+     (window-width . 42)
+     (side . right)
+     (slot . 1)
+     (window-parameters
+      (mode-line-format . ("" " %b")))))
+
+  ;; Auto-revert to disk on file change globally.
+  (global-auto-revert-mode t)
+
+  ;; Display line numbers in left fringe.
+  (setq display-line-numbers-width-start t)
+  (global-display-line-numbers-mode t)
+
+  ;; Soft word wrap
+  (setq-default word-wrap t)
+
+  ;; Don't insert a tab when indenting.
+  (setq-default indent-tabs-mode nil)
+
+  ;; A tab is equal to four spaces.
+  (setq-default tab-width 4)
+
+  ;; No alarm bells!
+  (setq ring-bell-function 'ignore)
+
+  ;; Larger history for shell commands.
+  (setq comint-input-ring-size 1024)
+  (setq eshell-history-size 1024)
+
+  ;; Scroll `*compilation*` buffer automatically.
+  (setq compilation-scroll-output t)
+
+  ;; Disable undo in shell mode.
+  (add-hook 'shell-mode-hook 'buffer-disable-undo)
+
+  ;; Show startup time.
+  (add-hook 'emacs-startup-hook
+            (lambda ()
+              (princ
+               (format
+                "Emacs loaded in %s with %d garbage collections."
+                (format "%.2fs" (float-time (time-subtract after-init-time before-init-time)))
+                gcs-done))
+              ))
+
+  ;; Disable built-in parentheses highlighting.
+  (setq show-paren-mode nil)
+
+  ;; Disable blinking cursor.
+  (blink-cursor-mode 0)
+
+  ;; Disable built-in version control (Magit is enough)
+  (setq vc-handled-backends nil)
+
+  ;; Save all backups in `~/.emacs.d/backup/` directory.
+  (setq backup-directory-alist '(("." . "~/.emacs.d/backup"))
+        backup-by-copying t
+        version-control t
+        delete-old-versions t
+        kept-new-versions 15
+        kept-old-versions 10)
+#+end_src
+
+** Local Variables
+
+# Local Variables:                ***
+# lensor-init/use-every-package:t ***
+# End:                            ***

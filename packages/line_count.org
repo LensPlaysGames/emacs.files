@@ -1,0 +1,178 @@
+#+title: line-count
+#+author: Rylan Lens Kellogg
+#+description: Things pertaining to buffer line count go here!
+#+created: <2022-06-28 Tue>
+
+A small, simple package to keep track of line count on a per-buffer basis.
+
+#+begin_src emacs-lisp :mkdirp yes :tangle (when lensor-init/use-every-package ../.emacs)
+  ;;; line-count
+  ;; Keep track of line count per-buffer.
+  (require line-count)
+  ;; Show line count in modeline in all buffers.
+  (global-line-count-mode t)
+#+end_src
+
+** Header
+
+#+begin_src emacs-lisp :mkdirp yes :tangle line-count.el
+  ;;; line-count.el --- Line count on a per-buffer basis -*- lexical-binding: t -*-
+
+  ;; Author: Rylan Lens Kellogg
+  ;; Maintainer: Lens
+  ;; Version: 0.0.1
+  ;; Package-Requires: ((emacs "27.1"))
+  ;; Homepage: TODO
+  ;; Keywords: line, count, lens
+
+
+  ;; This file is not part of GNU Emacs
+
+  ;; This program is free software: you can redistribute it and/or modify
+  ;; it under the terms of the GNU General Public License as published by
+  ;; the Free Software Foundation, either version 3 of the License, or
+  ;; (at your option) any later version.
+
+  ;; This program is distributed in the hope that it will be useful,
+  ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ;; GNU General Public License for more details.
+
+  ;; You should have received a copy of the GNU General Public License
+  ;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
+  ;;; Commentary:
+
+  ;; Check selected buffer line count with `M-x count-lines-buffer RET RET`
+
+  ;; I have to decide how to word the description, as this package does a few things.
+  ;; In general, it provides utilities related to *each* buffer's line count.
+
+  ;; TODO:
+  ;; |-- Figure out how a minor mode can automatically insert into `mode-line-format`.
+  ;; | This would allow others to easily enable/disable line count in the mode line.
+  ;; | Just from memory, it'd be good to take a look at keycast-insert-after or whatever it is.
+  ;; | Maybe see how column-number-mode works under the hood as well, since it's a built-in.
+  ;; |
+  ;; `-- Move `run-with-idle-timer` into minor-mode hook instead of top-level call.
+
+  ;;; Code:
+#+end_src
+
+** Code
+*** Dependencies
+
+Both ~nadvice~ and ~timer~ are only here to keep variables up-to-date.
+
+~simple~ and ~subr-x~ are legitimate dependencies.
+
+#+begin_src emacs-lisp :mkdirp yes :tangle line-count.el
+  (require 'files)
+  (require 'nadvice)
+  (require 'simple)
+  (require 'subr-x)
+  (require 'timer)
+#+end_src
+
+*** Store line count per-buffer
+
+#+begin_src emacs-lisp :mkdirp yes :tangle line-count.el
+  (defvar-local buffer-line-count -1
+    "Contains the line count of the current buffer, or -1 if invalid")
+
+  ;;;###autoload
+  (defun count-lines-buffer (&optional buffer)
+    "Calculate the amount of lines in a buffer (default current buffer)."
+    (interactive "bbuffer: ")
+    (unless buffer (setq buffer (current-buffer)))
+    (if (called-interactively-p 'interactive)
+        (message
+         "%d lines in %s"
+         (with-current-buffer buffer
+           (count-lines (point-min) (point-max)))
+         buffer)
+      (with-current-buffer buffer
+        (count-lines (point-min) (point-max)))))
+
+  (defun buffer-line-count-update ()
+    "Update line count variable for current buffer."
+    (setq buffer-line-count (count-lines-buffer)))
+#+end_src
+
+*** String for mode-line
+
+#+begin_src emacs-lisp :mkdirp yes :tangle line-count.el
+  (defcustom line-count-mode-line-pretty nil
+    "Convert the line count into human readable format (i.e. 1000 -> 1k)."
+    :type 'boolean
+    :group 'line-count)
+
+  (defvar-local line-count-mode-line nil
+    "Mode line format string containing current buffer line count.")
+
+  (defcustom line-count-mode-line-suffix
+    " lines"
+    "Appended to line count in mode line."
+    :type 'string
+    :group 'line-count)
+
+  (defun line-count-update ()
+    "Update the modeline line-count string variable with an updated line count."
+    (setq line-count-mode-line
+          (concat
+           (if line-count-mode-line-pretty
+               (file-size-human-readable buffer-line-count 'si)
+             (int-to-string buffer-line-count))
+           line-count-mode-line-suffix)))
+#+end_src
+
+*** Mode definitions
+
+#+begin_src emacs-lisp :mkdirp yes :tangle line-count.el
+  ;;; Modes
+
+  ;;;###autoload
+  (define-minor-mode line-count-mode
+    "Show the amount of lines in the buffer in the mode line."
+    :init-value nil
+    :lighter " lc")
+
+  (defun global-line-count-mode-p ()
+    "This predicate must return true for global-line-count-mode to turn on,
+  even if it's enabled. Advice around this function to alter what buffers
+  the global mode is active for.
+
+  By default, enables line-count-mode in all buffers."
+    (line-count-mode 1))
+
+  ;;;###autoload
+  (define-globalized-minor-mode global-line-count-mode
+    line-count-mode
+    global-line-count-mode-p
+    :group 'lens
+    :group 'line-count)
+#+end_src
+
+*** Updates, timers
+
+#+begin_src emacs-lisp :mkdirp yes :tangle line-count.el
+;;; Updates, Timers
+
+;; Ensure line count variable is up to date with changes in each buffer.
+;; This may be better-suited in a mode hook, or something, but this doesn't
+;; impact performance and works out of the box, so I'm keeping it.
+(run-with-idle-timer 0 'repeat 'buffer-line-count-update)
+
+;; Update the mode line line count string every time the buffer line count variable is updated.
+(advice-add 'buffer-line-count-update :after 'line-count-update)
+#+end_src
+
+** Epilogue
+
+#+begin_src emacs-lisp :mkdirp yes :tangle line-count.el
+(provide 'line-count)
+
+;;; line-count.el ends here
+#+end_src
+

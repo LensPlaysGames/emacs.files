@@ -1,0 +1,155 @@
+#+title: shell-on-bottom-mode
+
+This is a simple global minor mode that puts buffers with names
+matching a regexp in a side window attached to the bottom side of the
+current frame. This mimics a lot of other editors terminal placement,
+and helps a lot when switching between the two.
+
+TODO: Make attached window side a customizable option.
+I guess we'll also have to rename it to regexp-buffer-on-side-mode :^).
+
+*** use-package
+
+This automatically inserts this package into the ~.emacs~ generated
+during the installation process in ~emacs-init.org~.
+
+#+begin_src emacs-lisp :mkdirp yes :tangle (when lensor-init/use-every-package ../.emacs)
+  (use-package shell-on-bottom
+    :pin manual
+    :ensure nil
+    :bind
+    (:map shell-on-bottom-mode-map
+          ("<f8>" . 'window-toggle-side-windows))
+    :config
+    ;;(shell-on-bottom-mode 1)
+    )
+#+end_src
+
+*** Header
+
+#+begin_src emacs-lisp :mkdirp yes :tangle shell-on-bottom.el
+  ;;; shell-on-bottom.el --- Show shells in a side window on the bottom. -*- lexical-binding: t -*-
+
+  ;; Author: Rylan Lens Kellogg
+  ;; Maintainer: Rylan Lens Kellogg
+  ;; Version: 0.0.1
+  ;; Package-Requires: ()
+  ;; Homepage: TODO
+  ;; Keywords: shell, window
+
+
+  ;; This file is not part of GNU Emacs
+
+  ;; This program is free software: you can redistribute it and/or modify
+  ;; it under the terms of the GNU General Public License as published by
+  ;; the Free Software Foundation, either version 3 of the License, or
+  ;; (at your option) any later version.
+
+  ;; This program is distributed in the hope that it will be useful,
+  ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ;; GNU General Public License for more details.
+
+  ;; You should have received a copy of the GNU General Public License
+  ;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
+  ;;; Commentary:
+
+  ;; (require 'shell-on-bottom)
+  ;; or
+  ;; (use-package shell-on-bottom
+  ;;   :pin manual
+  ;;   :ensure nil
+  ;;   :bind
+  ;;   (:map shell-on-bottom-mode-map
+  ;;         ("<f8>" . 'window-toggle-side-windows))
+  ;;   :config
+  ;;   (shell-on-bottom-mode 1))
+
+
+#+end_src
+
+*** Code
+
+#+begin_src emacs-lisp :mkdirp yes :tangle shell-on-bottom.el
+  ;;; Code:
+
+  (require 'window)
+
+  (defvar shell-on-bottom-mode-map
+    (make-sparse-keymap)
+    "Part of 'shell-on-bottom-mode'.")
+
+  (defcustom shell-on-bottom-buffer-regexp
+    "\\*e?shell\\|\\*[Pp]ython\\*"
+    "Buffers with names matching this regexp will
+  be displayed in a side window attached to the
+  bottom side of the frame.
+
+  Part of 'shell-on-bottom-mode'."
+    :type 'regexp
+    :group 'shell-on-bottom)
+
+  (defcustom shell-on-bottom-window-percentage
+    0.33
+    "How much of the window width/height should the side window take up?
+
+  Part of 'shell-on-bottom-mode'."
+    :type 'float
+    :group 'shell-on-bottom)
+
+  (defcustom shell-on-bottom-mode-line-format
+    "%b"
+    "Set the mode line to this in the shell side window.
+
+  Set this to 'mode-line-format' for it to have no effect.
+
+  Part of 'shell-on-bottom-mode'."
+    :type 'string
+    :group 'shell-on-bottom)
+
+  (defvar-local shell-on-bottom--display-buffer-alist
+      nil
+    "The value of 'display-buffer-alist' before \
+    'shell-on-bottom-mode' altered it.
+
+    Part of 'shell-on-bottom-mode'.")
+
+  ;;;###autoload
+  (define-minor-mode shell-on-bottom-mode
+    "Modify 'display-buffer-alist' to put buffers matching
+  'shell-on-bottom-buffer-regexp' in a side window attached
+  to the bottom of the screen."
+    :init-value nil
+    :global t
+    :lighter " sh-bot"
+    :group 'shell-on-bottom
+    (if shell-on-bottom-mode
+        (progn
+          (setq shell-on-bottom--display-buffer-alist
+                display-buffer-alist)
+          (add-to-list
+           'display-buffer-alist
+           `(,shell-on-bottom-buffer-regexp
+             ;; Put in a side window on the bottom of the screen.
+             (display-buffer-in-side-window)
+             ;; Set the window height as a percentage of the total frame.
+             (window-height . ,shell-on-bottom-window-percentage)
+             ;; Attach to bottom side of frame.
+             (side . bottom)
+             ;; Prefer a window on the left hand side (cover corner cases).
+             (slot . -1)
+             (window-parameters
+              ;; Don't delete when making other buffer sole window
+              (no-delete-other-windows . t)
+              ;; Set the mode line of the shell side window.
+              (mode-line-format . ,shell-on-bottom-mode-line-format))
+             )))
+      (setq display-buffer-alist
+            shell-on-bottom--display-buffer-alist)))
+
+  (provide 'shell-on-bottom)
+
+  ;;; shell-on-bottom.el ends here
+#+end_src

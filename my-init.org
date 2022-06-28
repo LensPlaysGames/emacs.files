@@ -1,0 +1,15 @@
+#+title: Lens' Personal Emacs Configuration
+#+author: Rylan Lens Kellogg
+#+description: Emacs configuration that is specific per user or machine.
+#+created: <2022-06-26 Sun>
+
+This file is meant to be customized in any way you see fit!
+The only reason it exists is to serve as both an example and to
+minimize re-writing. To add Emacs Lisp into your initialization, just
+type it into a source block exactly like the one seen below.
+
+#+begin_example
+#+begin_src emacs-lisp :mkdirp yes :tangle my-init.el
+  ;; Code goes here
+#+end_src
+#+end_example

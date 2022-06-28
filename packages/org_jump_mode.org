@@ -1,0 +1,494 @@
+#+title: org-jump
+#+author: Rylan Lens Kellogg
+#+description: A simple presentation mode for org-mode files.
+#+created: <2022-06-28 Tue>
+
+I got annoyed and made a very simple, modern presentation package.
+
+Functionality is not yet all there, but it's coming along.
+
+I'm really happy with how this turned out.
+It's integration with olivetti is really slick, IMO.
+I enjoy that it is still very much an org-mode buffer,
+meaning code blocks could be evaluated, and the usual
+keybinds used to navigate, edit, fold, etc.
+I think this package could be extended upon by the user rather well,
+with the use of custom vars, keybindings, advices, and the mode hook.
+
+- [ ] ~org-jump-resume~ to enter presentation *at point*.
+
+  It would be cool if this happened when called with universal argument.
+
+- [ ] Recenter to middle when ~org-jump-scroll-context~ is negative.
+- [ ] "Narrow to current" customizable setting.
+
+  Narrow the accessible buffer to only the current slide.
+
+** use-package
+
+#+begin_src emacs-lisp :mkdirp yes :tangle (when lensor-init/use-every-package ../.emacs)
+  (use-package org-jump
+    :pin manual
+    :ensure nil
+    :after (org)
+    :custom
+    (org-jump-use-default-keybinds t)
+    ;; I accidentally hit buttons a lot!
+    (org-jump-read-only t)
+    ;; Scroll automatically to current /slide/.
+    ;; This is like a poor mans narrowing, really.
+    (org-jump-scroll t)
+    ;; Make text really big.
+    (org-jump-text-scale-level 5))
+#+end_src
+
+** Package Header
+
+#+begin_src emacs-lisp :mkdirp yes :tangle org-jump.el
+  ;;; org-jump.el --- Simple, presentable org-mode files!
+
+  ;; Copyright (C) 2022  Rylan Lens Kellogg
+
+  ;; Author: Rylan Lens Kellogg <lensplaysgames@gmail.com>
+  ;; Maintainer: Rylan Lens Kellogg <lensplaysgames@gmail.com>
+  ;; Created: <2022-05-17 Tue>
+  ;; Version: 0.0.1
+  ;; Keywords: org, present, hypermedia, outlines
+  ;; Package-Requires: ((org "7.8.09"))
+
+  ;; This file is not part of GNU Emacs
+
+  ;; This program is free software; you can redistribute it and/or modify
+  ;; it under the terms of the GNU General Public License as published by
+  ;; the Free Software Foundation, either version 3 of the License, or
+  ;; (at your option) any later version.
+
+  ;; This program is distributed in the hope that it will be useful,
+  ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ;; GNU General Public License for more details.
+
+  ;; You should have received a copy of the GNU General Public License
+  ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+  ;;; Commentary:
+
+  ;; This is a very simple minor mode for
+  ;; showing an org-file as a presentation.
+
+  ;; If there is not a blank line between two headers,
+  ;; there is a possibility of it not doing what you expect.
+
+  ;;; Code:
+#+end_src
+
+** Code
+
+#+begin_src emacs-lisp :mkdirp yes :tangle org-jump.el
+  (require 'outline)
+  (require 'org)
+  ;; For text-scale and friends
+  (require 'face-remap)
+
+  (defgroup org-jump nil
+    "Simple, presentable 'org-mode' files!"
+    :group 'org
+    :prefix "org-jump-")
+
+  (defvar org-jump-mode-map (make-sparse-keymap)
+    "Keymap for 'org-mode-map'.")
+
+  ;;; Internal functions
+
+  (defun org-jump--show ()
+    "Show the current heading.
+
+  Part of 'org-jump-mode'."
+    ;; Show text within current header.
+    (outline-show-entry)
+    (forward-line)
+    ;; Show all subheadings within this heading,
+    ;; but not the text within each one of them.
+    ;; To show bodies as well, use outline-show-subtree.
+    (outline-show-branches)
+    (when org-jump-scroll
+      (recenter (+ 1 org-jump-scroll-context))))
+
+  (defun org-jump--hide ()
+    "Hide the current heading.
+
+  Part of 'org-jump-mode'."
+    (outline-hide-leaves)
+    (outline-hide-entry))
+
+  (defun org-jump--hide-subtree ()
+    "Hide subtree at point, then move point to beginning of line.
+
+  Part of 'org-jump-mode'."
+    (interactive)
+    (outline-hide-subtree)
+    (org-beginning-of-line))
+
+  (defun org-jump--define-default-keybinds ()
+    "Define the default keybinds.
+
+  \\{org-jump-mode-map}
+
+  Part of 'org-jump-mode'."
+    (define-key org-jump-mode-map "q" 'org-jump-exit)
+    ;; Jump down/up a heading.
+    (define-key org-jump-mode-map (kbd "<SPC>") 'org-jump-down)
+    (define-key org-jump-mode-map (kbd "<S-SPC>") 'org-jump-up)
+    ;; Jump forward/backward a sibling heading.
+    (define-key org-jump-mode-map "f" 'org-jump-forward)
+    (define-key org-jump-mode-map "b" 'org-jump-backward)
+    ;; Scroll screen up/down manually by a single line at a time.
+    (define-key org-jump-mode-map "p" 'scroll-down-line)
+    (define-key org-jump-mode-map "n" 'scroll-up-line)
+    ;; Hide/show subtree at point.
+    (define-key org-jump-mode-map "x" 'org-jump--hide-subtree)
+    (define-key org-jump-mode-map "s" 'outline-show-subtree)
+    ;; Reset presentation to initial slide.
+    (define-key org-jump-mode-map "r" 'org-jump-show-initial))
+
+  ;;; Functions
+
+  (defun org-jump-show-initial ()
+    "Position point at first headline, showing headings but not their bodies.
+
+  When 'org-jump-scroll-at-start' is non-nil, scroll the window so the
+  headline is at the top of the window.
+
+  Part of 'org-jump-mode'."
+    (interactive)
+    ;; Show entire file.
+    (outline-show-all)
+    ;; Hide bodies of all headings.
+    (outline-hide-body)
+    ;; Put point on first heading, if it exists.
+    (goto-char (point-min))
+    (re-search-forward "^\\*+" nil t)
+    (org-beginning-of-line)
+    ;; Scroll top of buffer to point.
+    (when org-jump-scroll-at-start
+      (recenter 0)))
+
+  (defun org-jump-backward ()
+    "Jump to and expand the previous heading of \
+  the same or lesser org heading level.
+
+  Part of 'org-jump-mode'."
+    (interactive)
+    (let ((heading-level (funcall outline-level))
+          (match-count (if (org-at-heading-p) 1 2)))
+      (org-jump--hide)
+      (when (re-search-backward
+             (format "^\\*\\{1,%d\\} " heading-level)
+             nil t match-count)
+        (org-jump--show))
+      (org-beginning-of-line)
+      ))
+
+  (defun org-jump-forward ()
+    "Jump to and expand the next heading of \
+  the same or lesser org heading level.
+
+  Part of 'org-jump-mode'."
+    (interactive)
+    (let ((heading-level (funcall outline-level))
+          (point-before (point)))
+      (when (re-search-forward (format "^\\*\\{1,%d\\} " heading-level) nil t)
+        (let ((point-after (point)))
+          (goto-char point-before)
+          (org-jump--hide)
+          (goto-char point-after)
+          (org-jump--show)
+          (org-beginning-of-line)))))
+
+
+  (defun org-jump-up ()
+    "Jump to and expand the previous heading.
+
+  Part of 'org-jump-mode'."
+    (interactive)
+    ;; If beginning of line is org header (1 or more `*`)
+    (let ((match-count (if (org-at-heading-p) 1 2)))
+      (org-jump--hide)
+      ;; Move point to previous heading.
+      (when (re-search-backward "^\\*+" nil t match-count)
+        (org-jump--show))
+      (org-beginning-of-line)
+      ))
+
+  (defun org-jump-down ()
+    "Jump to and expand the next heading.
+
+  Part of 'org-jump-mode'."
+    (interactive)
+    ;; If beginning of line is org header (1 or more `*`)
+    (if (org-at-heading-p)
+        ;; Then show the heading, move point inside.
+        (org-jump--show)
+      ;; Else, hide current header, and move to the next one.
+      (let ((point-before (point)))
+        (when (re-search-forward "^\\*+" nil t)
+          (let ((point-after (point)))
+            (goto-char point-before)
+            (org-jump--hide)
+            (goto-char point-after)
+            (org-jump--show)
+            (org-beginning-of-line))))))
+
+  (defun org-jump-exit ()
+    "Exit 'org-jump-mode'.
+
+  If 'org-jump-exit-confirm' is non-nil,
+  this will prompt with 'y-or-n-p' before exiting.
+
+  Part of 'org-jump-mode'."
+    (interactive)
+    (if org-jump-exit-confirm
+        (when (y-or-n-p "Really quit org-jump-mode?")
+          (org-jump-mode -1))
+      (org-jump-mode -1)))
+
+
+#+end_src
+
+** Customizable values
+
+#+begin_src emacs-lisp :mkdirp yes :tangle org-jump.el
+  ;;;; Customizable values
+
+  ;; This is recommended in the Emacs Info manual to ensure this value is set
+  ;; early enough in the variables lifetime for it to actually come into effect.
+  ;;;###autoload (put 'org-jump-text-scale-level 'safe-local-variable 'integerp)
+  (defcustom org-jump-text-scale-level 3
+    "How text should be scaled when 'org-jump-mode' is enabled.
+
+  Upon entering 'org-jump-mode', 'text-scale-set'
+  will be called with this value as an argument.
+
+  Part of 'org-jump-mode'."
+    :type 'integer
+    :local t
+    :group 'org-jump)
+
+  ;;;###autoload (put 'org-jump-scroll 'safe-local-variable 'booleanp)
+  (defcustom org-jump-scroll nil
+    "When non-nil, every time a new slide is shown, scroll to it.
+
+  Part of 'org-jump-mode'."
+    :type 'boolean
+    :local t
+    :group 'org-jump)
+
+  ;;;###autoload (put 'org-jump-scroll-at-start 'safe-local-variable 'booleanp)
+  (defcustom org-jump-scroll-at-start t
+    "When non-nil, scroll to the first slide when 'org-jump-mode' is enabled.
+
+  Part of 'org-jump-mode'."
+    :type 'boolean
+    :local t
+    :group 'org-jump)
+
+  ;;;###autoload (put 'org-jump-scroll-context 'safe-local-variable 'integerp)
+  (defcustom org-jump-scroll-context 0
+    "This value determines the amount of lines to keep on screen
+  above heading while scrolling.
+
+  'org-jump-scroll' must be non-nil for this to take effect.
+
+  Part of 'org-jump-mode'."
+    :type 'natnum
+    :local t
+    :group 'org-jump)
+
+  ;;;###autoload (put 'org-jump-read-only 'safe-local-variable 'booleanp)
+  (defcustom org-jump-read-only nil
+    "When non-nil, the buffer will be marked read-only
+  upon entering 'org-jump-mode'.
+
+  Part of 'org-jump-mode'."
+    :type 'boolean
+    :local t
+    :group 'org-jump)
+
+  ;;;###autoload (put 'org-jump-org-modern 'safe-local-variable 'booleanp)
+  (defcustom org-jump-org-modern t
+    "When non-nil, 'org-modern-mode' will be enabled
+  upon entering 'org-jump-mode', if installed.
+
+  Part of 'org-jump-mode'."
+    :type 'boolean
+    :local t
+    :group 'org-jump)
+
+  ;;;###autoload (put 'org-jump-olivetti 'safe-local-variable 'booleanp)
+  (defcustom org-jump-olivetti t
+    "When non-nil, 'olivetti-mode' will be enabled
+  upon entering 'org-jump-mode', if installed.
+
+  Part of 'org-jump-mode'."
+    :type 'boolean
+    :local t
+    :group 'org-jump)
+
+  (defcustom org-jump-use-default-keybinds nil
+    "Upon entering 'org-jump-mode', set up the default keybinds.
+
+  Part of 'org-jump-mode'."
+    :type 'boolean
+    :group 'org-jump)
+
+  ;;;###autoload (put 'org-jump-exit-confirm 'safe-local-variable 'booleanp)
+  (defcustom org-jump-exit-confirm t
+    "Ask before exiting 'org-jump-mode'.
+
+  Useful to prevent accidental quitting during a presentation.
+
+  Part of 'org-jump-mode'."
+    :type 'boolean
+    :local t
+    :group 'org-jump)
+#+end_src
+
+** Internals
+
+#+begin_src emacs-lisp :mkdirp yes :tangle org-jump.el
+
+  ;;;; Save State
+
+  (defvar-local org-jump--org-hide-emphasis-markers nil
+    "This is the value of 'org-hide-emphasis-markers'
+  before entering 'org-jump-mode'.
+
+  Part of 'org-jump-mode'.")
+
+  (defvar-local org-jump--text-scale-mode-amount 0
+    "This is the value of 'text-scale-mode-amount'
+  before entering 'org-jump-mode'.
+
+  Part of 'org-jump-mode'.")
+
+  (defvar-local org-jump--org-modern-mode -1
+    "This is a value that corresponds to the value of 'org-modern-mode'
+  before entering 'org-jump-mode'.
+
+  Part of 'org-jump-mode'.")
+
+  (defvar-local org-jump--olivetti-mode -1
+    "This is a value that corresponds to the value of 'olivetti-mode'
+  before entering 'org-jump-mode'.
+
+  Part of 'org-jump-mode'.")
+
+  (defvar-local org-jump--display-line-numbers-mode nil
+    "This is the value of 'display-line-numbers-mode'
+  before entering 'org-jump-mode'.
+
+  Part of 'org-jump-mode'.")
+
+  (defun org-jump--enable ()
+    "This function is called when 'org-jump-mode' is being enabled.
+
+  Part of 'org-jump-mode'."
+    (when org-jump-use-default-keybinds
+      (org-jump--define-default-keybinds))
+    (setq org-jump--org-hide-emphasis-markers
+          org-hide-emphasis-markers)
+    (text-scale-mode 1)
+    (setq org-jump--text-scale-mode-amount
+          text-scale-mode-amount)
+    ;; Disable display-line-numbers-mode.
+    (when (boundp 'display-line-numbers-mode)
+      (setq org-jump--display-line-numbers-mode
+            display-line-numbers-mode)
+      (display-line-numbers-mode -1))
+    ;; Set text scale.
+    (text-scale-set org-jump-text-scale-level)
+    ;; Org Modern mode
+    (when (and org-jump-org-modern
+               (package-installed-p 'org-modern))
+      (unless (boundp 'org-modern-mode)
+        (require 'org-modern))
+      (if org-modern-mode
+          (setq org-jump--org-modern-mode 1)
+        (setq org-jump--org-modern-mode -1))
+      (org-modern-mode 1))
+    ;; Olivetti mode (centered body).
+    (when (and org-jump-olivetti
+               (package-installed-p 'olivetti))
+      (unless (boundp 'olivetti-mode)
+        (require 'olivetti))
+      (if olivetti-mode
+          (setq org-jump--olivetti-mode 1)
+        (setq org-jump--olivetti-mode -1))
+      (olivetti-mode 1))
+    ;; Hide emphasis markers (like * and / for bold and italic).
+    (setq-local org-hide-emphasis-markers t)
+    ;; Reload font-lock (doesn't update otherwise).
+    (font-lock-mode 1)
+    ;; Display inline images where possible.
+    (org-display-inline-images)
+    (org-jump-show-initial))
+
+  (defun org-jump--disable ()
+    "This function is called when 'org-jump-mode' is being disabled.
+
+  Part of 'org-jump-mode'."
+    ;; Reset state.
+    (setq org-hide-emphasis-markers
+          org-jump--org-hide-emphasis-markers)
+    (text-scale-set org-jump--text-scale-mode-amount)
+    (display-line-numbers-mode org-jump--display-line-numbers-mode)
+    (font-lock-mode 1)
+    (org-remove-inline-images)
+    ;; Olivetti mode (centered body).
+    (when (and org-jump-olivetti
+               (package-installed-p 'olivetti)
+               (boundp 'olivetti-mode))
+      (olivetti-mode org-jump--olivetti-mode))
+    ;; Org Modern mode
+    (when (and org-jump-org-modern
+               (package-installed-p 'org-modern)
+               (boundp 'org-modern-mode))
+      (org-modern-mode org-jump--org-modern-mode)))
+
+#+end_src
+
+** Autoloads
+
+#+begin_src emacs-lisp :mkdirp yes :tangle org-jump.el
+  ;;;###autoload
+  (define-minor-mode org-jump-mode
+    "'org-jump-mode' is a simple presentation mode for org files.
+
+    'org-jump-mode' treats an org file as a list of slides,
+    delimited by header/headline/heading. Each heading may be
+    opened. An opened heading will hide other shown headings.
+
+    For customizable settings and options, use
+    'M-x customize-group RET org-jump RET'.
+
+    \\{org-jump-mode-map}"
+    :init-value nil
+    :lighter " org-jump"
+    :keymap org-jump-mode-map
+    ;; Don't start unless in org-mode.
+    (unless (eq major-mode 'org-mode)
+      (error "org-jump-mode only works within org-mode!"))
+    ;; Line-wrapping.
+    (visual-line-mode org-jump-mode)
+    ;; Read-only buffer.
+    (when org-jump-read-only
+      (setq buffer-read-only org-jump-mode))
+    (if org-jump-mode
+        (org-jump--enable)
+      (org-jump--disable)))
+
+  (provide 'org-jump)
+
+  ;;; org-jump.el ends here
+#+end_src
+
