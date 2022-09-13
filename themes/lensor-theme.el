@@ -184,96 +184,96 @@
 
    ;;; ANSI Color Code faces
    `(ansi-color-black
-     ((t (:background 
+     ((t (:background
           , *background*
           :foreground
           , *background*
           ))))
    `(ansi-color-red
-     ((t (:background 
+     ((t (:background
           , *lensor-dark-red*
           :foreground
           , *lensor-dark-red*
           ))))
-   `(ansi-color-green 
-     ((t (:background 
+   `(ansi-color-green
+     ((t (:background
           , *lensor-green*
           :foreground
           , *lensor-green*
           ))))
-   `(ansi-color-yellow 
-     ((t (:background 
+   `(ansi-color-yellow
+     ((t (:background
           , *lensor-yellow*
           :foreground
           , *lensor-yellow*
           ))))
-   `(ansi-color-blue 
-     ((t (:background 
+   `(ansi-color-blue
+     ((t (:background
           , *lensor-blue*
           :foreground
           , *lensor-blue*
           ))))
-   `(ansi-color-magenta 
-     ((t (:background 
+   `(ansi-color-magenta
+     ((t (:background
           , *lensor-magenta*
           :foreground
           , *lensor-magenta*
           ))))
-   `(ansi-color-cyan 
-     ((t (:background 
+   `(ansi-color-cyan
+     ((t (:background
           , *lensor-cyan*
           :foreground
           , *lensor-cyan*
           ))))
-   `(ansi-color-white 
-     ((t (:background 
+   `(ansi-color-white
+     ((t (:background
           , *foreground-secondary*
           :foreground
           , *foreground-secondary*
           ))))
-   `(ansi-color-brightblack 
-     ((t (:background 
+   `(ansi-color-brightblack
+     ((t (:background
           , *lensor-grey-3*
           :foreground
           , *lensor-grey-3*
           ))))
-   `(ansi-color-brightred 
-     ((t (:background 
+   `(ansi-color-brightred
+     ((t (:background
           , *lensor-bright-red*
           :foreground
           , *lensor-bright-red*
           ))))
-   `(ansi-color-brightgreen 
-     ((t (:background 
+   `(ansi-color-brightgreen
+     ((t (:background
           , *lensor-bright-green*
           :foreground
           , *lensor-bright-green*
           ))))
-   `(ansi-color-brightyellow 
-     ((t (:background 
+   `(ansi-color-brightyellow
+     ((t (:background
           , *lensor-bright-yellow*
           :foreground
           , *lensor-bright-yellow*
           ))))
-   `(ansi-color-brightblue 
-     ((t (:background 
+   `(ansi-color-brightblue
+     ((t (:background
           , *lensor-bright-blue*
           :foreground
           , *lensor-bright-blue*
           ))))
-   `(ansi-color-brightmagenta 
-     ((t (:background 
+   `(ansi-color-brightmagenta
+     ((t (:background
           , *lensor-bright-magenta*
           :foreground
           , *lensor-bright-magenta*
           ))))
-   `(ansi-color-brightcyan 
-     ((t (:background 
+   `(ansi-color-brightcyan
+     ((t (:background
           , *lensor-bright-cyan*
           :foreground
           , *lensor-bright-cyan*
           ))))
-   `(ansi-color-brightwhite 
+   `(ansi-color-brightwhite
      ((t (:background
           , *foreground*
           :foreground
