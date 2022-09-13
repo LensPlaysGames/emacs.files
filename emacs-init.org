@@ -259,7 +259,6 @@ manually in these org files, and for my code comments.
     (unless original-point
       (setq original-point (point)))
     (beginning-of-line)
-    (princ word)
     ;; When line contains COLUMN columns...
     (if (= column (move-to-column column))
         (progn
