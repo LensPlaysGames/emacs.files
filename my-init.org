@@ -28,6 +28,32 @@ type it into a source block exactly like the one seen below.
   (load-theme 'lensor t)
 #+end_src
 
+** Keybindings
+
+#+begin_src emacs-lisp :mkdirp yes :tangle my-init.el
+  (bind-key "C-x C-b" 'ibuffer)
+
+  ;; Bind keys to basic compilation commands.
+  (bind-key "<f5>" 'compile)
+  (bind-key "<f6>" 'recompile)
+
+  ;; Choose which display to open a new Emacs frame on.
+  ;; This allows for Emacs to expand it's territory >:).
+  (bind-key "C-x 5 3" 'make-frame-on-monitor)
+
+  ;; Move vertical window border left/right using keyboard.
+  (bind-key "C-M-z" 'move-border-left)
+  (bind-key "C-M-x" 'move-border-right)
+
+  ;; Duplicate the current line, keeping cursor at column.
+  (bind-key "C-S-c C-S-c" 'duplicate-line)
+
+  ;; Wrap the current line to argument column length as a comment.
+  (bind-key "C-c w" 'lens/wrap-comment)
+  ;; Wrap the current line to argument column length.
+  (bind-key "C-c W" 'wrap-at-column)
+#+end_src
+
 ** Custom Font(s)
 
 #+begin_src emacs-lisp :mkdirp yes :tangle my-init.el
