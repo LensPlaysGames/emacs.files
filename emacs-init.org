@@ -818,6 +818,10 @@ This uses the built-in ~zone~ package.
 
   ;; Scroll `*compilation*` buffer automatically.
   (setq compilation-scroll-output t)
+
+  ;; Do not ask a million times if I'd like to save my files when compiling >:|
+  ;; Shoutout to TTV@Aruseus for this amazing quick tip :^)
+  (setq compilation-ask-about-save nil)
 #+end_src
 
 **** Customize Emacs file backups
