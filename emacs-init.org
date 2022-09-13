@@ -846,7 +846,7 @@ This uses the built-in ~zone~ package.
 #+end_src
 
 
-** Local Variables
+** Local Variables :noexport:
 
 # Local Variables:               ***
 # emacs-init/use-every-package:t ***
