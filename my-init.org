@@ -13,3 +13,18 @@ type it into a source block exactly like the one seen below.
   ;; Code goes here
 #+end_src
 #+end_example
+
+** User Details
+
+#+begin_src emacs-lisp :mkdirp yes :tangle my-init.el
+  (setq user-full-name "Your Name Here")
+  (setq user-mail-address "your@email-here.com")
+#+end_src
+
+
+** Load Theme
+
+#+begin_src emacs-lisp :mkdirp yes :tangle my-init.el
+  (load-theme 'lensor t)
+#+end_src
+
