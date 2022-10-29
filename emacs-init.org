@@ -52,11 +52,14 @@ Execute source block under point in ~org-mode~ using ~org-babel~:
 
 #+name: install
 #+begin_src emacs-lisp :dir . :results none
+  ;; Settings to configure.
+  (defvar emacs-init/use-every-package t)
+
   ;; Backup current Emacs configuration (only things that may be over-written).
   (message "Backing up current config...")
   (let* ((time-string (format-time-string "%Y-%m-%d-%H-%M-%S"))
-         (backup-dir (expand-file-name time-string "backup"))
-         (custom-user-init-file (expand-file-name "my-init.el" user-emacs-directory)))
+     (backup-dir (expand-file-name time-string "backup"))
+     (custom-user-init-file (expand-file-name "my-init.el" user-emacs-directory)))
     (message "Backing up Emacs configuration to %s..." backup-dir)
     (make-directory backup-dir t)
     ;; The user init file isn't present on a fresh Emacs.
@@ -65,16 +68,16 @@ Execute source block under point in ~org-mode~ using ~org-babel~:
     (when (file-exists-p custom-user-init-file)
       (copy-file custom-user-init-file (expand-file-name "my-init.el" backup-dir) t))
     (copy-directory user-emacs-directory
-                    (expand-file-name ".emacs.d" backup-dir)
-                    nil t t))
+            (expand-file-name ".emacs.d" backup-dir)
+            nil t t))
   (message "Tangling into Elisp...")
   (let ((generated-files (append
-                          (org-babel-tangle-file "my-init.org")
-                          (org-babel-tangle-file "emacs-init.org")))
-        (generated-packages (mapcar (lambda (file-path) (org-babel-tangle-file file-path))
-                                    (directory-files "packages" t "\\.org$")))
-        (generated-themes (mapcar (lambda (file-path) (org-babel-tangle-file file-path))
-                                  (directory-files "themes" t "\\.org$"))))
+              (org-babel-tangle-file "my-init.org")
+              (org-babel-tangle-file "emacs-init.org")))
+    (generated-packages (mapcar (lambda (file-path) (car (org-babel-tangle-file file-path)))
+                    (directory-files "packages" t "\\.org$")))
+    (generated-themes (mapcar (lambda (file-path) (org-babel-tangle-file file-path))
+                  (directory-files "themes" t "\\.org$"))))
     (message "Installing new configuration...")
 
     ;; Copy user init files.
@@ -84,34 +87,35 @@ Execute source block under point in ~org-mode~ using ~org-babel~:
     (message "Installing packages...")
     (dolist (package (directory-files "packages" t "\\.el$"))
       (let ((package-install-path (expand-file-name
-                                   (file-name-nondirectory package)
-                                   (expand-file-name "lisp" user-emacs-directory))))
-        (copy-file package package-install-path)
-        (byte-compile-file package-install-path)
-        ))
+                   (file-name-nondirectory package)
+                   (expand-file-name "lisp" user-emacs-directory))))
+    (copy-file package package-install-path t)
+    (byte-compile-file package-install-path)
+    ))
     (dolist (generated-package generated-packages)
       (when (file-exists-p generated-package)
-        (let ((package-install-path (expand-file-name
-                                     (file-name-nondirectory generated-package)
-                                     (expand-file-name "lisp" user-emacs-directory))))
-          (copy-file generated-package package-install-path)
-          (when (string-suffix-p ".el" package-install-path)
-            (byte-compile-file package-install-path))
-          )))
+    (let ((package-install-path (expand-file-name
+                     (file-name-nondirectory generated-package)
+                     (expand-file-name "lisp" user-emacs-directory))))
+      (princ generated-package)
+      (copy-file generated-package package-install-path t)
+      (when (string-suffix-p ".el" package-install-path)
+        (byte-compile-file package-install-path))
+      )))
 
     (message "Installing themes...")
     (dolist (theme (directory-files "themes" t "\\.el$"))
       (let ((theme-install-path (expand-file-name
-                                 (file-name-nondirectory theme)
-                                 user-emacs-directory)))
-        (copy-file theme theme-install-path)))
+                 (file-name-nondirectory theme)
+                 user-emacs-directory)))
+    (copy-file theme theme-install-path t)))
     (dolist (generated-theme generated-themes)
       (when (file-exists-p generated-theme)
-        (let ((theme-install-path
-               (expand-file-name
-                (file-name-nondirectory generated-theme)
-                user-emacs-directory)))
-          (copy-file generated-theme theme-install-path))))
+    (let ((theme-install-path
+           (expand-file-name
+        (file-name-nondirectory generated-theme)
+        user-emacs-directory)))
+      (copy-file generated-theme theme-install-path t))))
 
     (message "Cleaning generated files...")
     (dolist (generated-file (append generated-files generated-packages generated-themes))
@@ -120,8 +124,9 @@ Execute source block under point in ~org-mode~ using ~org-babel~:
 
   (when (y-or-n-p "Load new configuration?")
     (load user-init-file)))
-
 #+end_src
+
+TODO: Write LISP to restore from a backup.
 
 ** ~.emacs~
 
@@ -172,6 +177,53 @@ Execute source block under point in ~org-mode~ using ~org-babel~:
 **** Utility Functions
 
 These are some very helpful LISP functions that I use.
+
+***** Promote/Demote TeX headings
+
+Search and replace the following, in order.
+"\section" -> "\chapter"
+"\subsection" -> "\section"
+"\subsubsection" -> "\subsection"
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  (defun tex-promote-headings ()
+    (interactive)
+    (save-excursion
+      (beginning-of-buffer)
+      (while (re-search-forward (rx line-start "\\section") nil t)
+        (replace-match "\\chapter" t t))
+      (beginning-of-buffer)
+      (while (re-search-forward (rx line-start "\\subsection") nil t)
+        (replace-match "\\section" t t))
+      (beginning-of-buffer)
+      (while (re-search-forward (rx line-start "\\subsubsection") nil t)
+        (replace-match "\\subsection" t t))
+      ))
+
+  (defun tex-demote-headings ()
+    (interactive)
+    (save-excursion
+      (beginning-of-buffer)
+      (while (re-search-forward (rx line-start "\\subsection") nil t)
+        (replace-match "\\subsubsection" t t))
+      (beginning-of-buffer)
+      (while (re-search-forward (rx line-start "\\section") nil t)
+        (replace-match "\\subsection" t t))
+      (beginning-of-buffer)
+      (while (re-search-forward (rx line-start "\\chapter") nil t)
+        (replace-match "\\section" t t))
+      ))
+#+end_src
+
+***** Revert buffer without ~yes-or-no-p~
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  (defun revert-buffer-no-confirm ()
+    (interactive)
+    (revert-buffer t t))
+#+end_src
+
+[2022-09-17 Sat 16:27]
 
 ***** Convert tabs to spaces in entire buffer
 
@@ -243,7 +295,7 @@ Basically, take the current line and split it into multiple lines
 broken before a specific column and between words. Similar to what I do
 manually in these org files, and for my code comments.
 
-#+begin_src emacs-lisp :mkdirp yes :tangle my-init.el
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
   (defconst wrap-at-column-whitespace "\t\n\r "
     "All characters within this string at end of each line in
   'wrap-at-column' will be removed before creating a new line.")
@@ -582,6 +634,31 @@ Exclude them by defining ~emacs-init/use-every-package~ to nil.
 
 **** A e s t h e t i c
 
+***** Ligatures
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  (use-package ligature
+    :config
+    ;; Enable all Cascadia Code ligatures in programming modes
+    (ligature-set-ligatures 't '("www" "?!" "ae" "ff" "fi" "fl" "ft" "ffl" "ffi" "ct" "fs" "st" "sp" "fj" "fk" "ij" "Th" "ct" "ck" "oo" "TT" "LL"))
+    (ligature-set-ligatures 'prog-mode '("|||>" "<|||" "<==>" "<!--" "####" "~~>" "***" "||=" "||>"
+                                         ":::" "::=" "=:=" "==>" "=!=" "=>>" "=<<" "=/=" "!=="
+                                         "!!." ">=>" ">>=" ">>>" ">>-" ">->" "->>" "-->" "-<<"
+                                         "<~~" "<~>" "<*>" "<||" "<|>" "<$>" "<==" "<=>" "<=<" "<->"
+                                         "<--" "<-<" "<<=" "<<-" "<<<" "<+>" "</>" "###" "#_(" "..<"
+                                         "..." "+++" "/==" "///" "_|_" "www" "&&" "^=" "~~" "~@" "~="
+                                         "~>" "~-" "**" "*>" "*/" "||" "|}" "|]" "|=" "|>" "{|"
+                                         "[|" "]#" "::" ":=" ":>" ":<" "$>" "==" "=>" "!=" "!!" ">:"
+                                         ">=" ">>" ">-" "-~" "->" "-<" "<~" "<*" "<|" "<:"
+                                         "<$" "<=" "<>" "<-" "<<" "<+" "</" "#{" "#[" "#:" "#=" "#!"
+                                         "##" "#(" "#?" "#_" "%%" ".=" ".-" ".." ".?" "+>" "++" "?:"
+                                         "?=" "?." "??" ";;" "/*" "/=" "/>" "//" "__" "~~" "(*" "*)"
+                                         "\\\\" "://"))
+    ;; Enables ligature checks globally in all buffers.
+    (global-ligature-mode t)
+    )
+#+end_src
+
 ***** Fixed-pitch Fix
 
 I hate how fixed-pitch fonts look in Emacs, and it isn't needed when
@@ -791,6 +868,13 @@ This uses the built-in ~zone~ package.
   (setq vc-handled-backends nil)
 #+end_src
 
+**** Show trailing whitespace
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  ;; Show extra whitespace at the end of a line very clearly.
+  (setq-default show-trailing-whitespace t)
+#+end_src
+
 **** Report Startup Time
 
 #+begin_src emacs-lisp :mkdirp yes :tangle .emacs
@@ -822,6 +906,9 @@ This uses the built-in ~zone~ package.
   ;; Do not ask a million times if I'd like to save my files when compiling >:|
   ;; Shoutout to TTV@Aruseus for this amazing quick tip :^)
   (setq compilation-ask-about-save nil)
+
+  ;; Always kill a running compilation with a new compilation.
+  (setq compilation-always-kill t)
 #+end_src
 
 **** Customize Emacs file backups
@@ -850,8 +937,3 @@ This uses the built-in ~zone~ package.
 #+end_src
 
 
-** Local Variables :noexport:
-
-# Local Variables:               ***
-# emacs-init/use-every-package:t ***
-# End:                           ***

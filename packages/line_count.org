@@ -5,13 +5,13 @@
 
 A small, simple package to keep track of line count on a per-buffer basis.
 
-#+begin_src emacs-lisp :mkdirp yes :tangle (when emacs-init/use-every-package ../.emacs)
+;#+begin_src emacs-lisp :mkdirp yes :tangle (when emacs-init/use-every-package "../.emacs")
   ;;; line-count
   ;; Keep track of line count per-buffer.
   (require line-count)
   ;; Show line count in modeline in all buffers.
   (global-line-count-mode t)
-#+end_src
+;#+end_src
 
 ** Header
 

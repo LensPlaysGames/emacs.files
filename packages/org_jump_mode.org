@@ -26,7 +26,12 @@ with the use of custom vars, keybindings, advices, and the mode hook.
 
 ** use-package
 
-#+begin_src emacs-lisp :mkdirp yes :tangle (when emacs-init/use-every-package ../.emacs)
+# This is so fucking stupid that there's literally no fucking way for
+# this to work. WHY IN THE FUCK WOULD ORG BABEL OVERWRITE EVERYTIME IT
+# FUCKING TANGLES? WHY IS THERE NO OPTION? WHAT THE FUCK IS WRONG WITH
+# WHOEVER MADE THIS STUPID FUCKING PACKAGE. I WISH YOU NEVER DID SO I
+# DIDN'T GET MY HOPES UP YOU USELESS FUCKING TOAD. FUCK YOU.
+;#+begin_src emacs-lisp :mkdirp yes :tangle (when emacs-init/use-every-package "../.emacs")
   (use-package org-jump
     :pin manual
     :ensure nil
@@ -40,7 +45,7 @@ with the use of custom vars, keybindings, advices, and the mode hook.
     (org-jump-scroll t)
     ;; Make text really big.
     (org-jump-text-scale-level 5))
-#+end_src
+;#+end_src
 
 ** Package Header
 
