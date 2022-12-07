@@ -110,6 +110,8 @@
    `(font-lock-string-face        ((t (:foreground , *lensor-yellow*))))
    `(font-lock-type-face          ((t (:foreground , *lensor-bright-blue*))))
    `(font-lock-variable-name-face ((t (:foreground , *foreground*))))
+   `(font-lock-operator-face      ((t (:foreground , *lensor-light-green*))))
+   `(font-lock-delimiter-face     ((t (:foreground , *lensor-green*))))
 
    ;;; Button and links
    `(link         ((t (:underline t :foreground , *link*))))
