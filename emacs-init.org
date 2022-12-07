@@ -754,39 +754,6 @@ how useful and valuable this simple feature is.
     (eshell-prompt ((t (:foreground "#7c8085")))))
 #+end_src
 
-***** Emacs Command Logging
-
-This plugin seems like it would be really cool, but it is written in a
-horribly unusable fasion. Not customizable. Hard-coded window
-parameters and having a buffer name that starts with space and
-therefore isn't listed anywhere buffers are is just plain *bad*.
-
-#+begin_src emacs-lisp :mkdirp yes :tangle no
-  (use-package command-log-mode
-    :defer t
-    :config
-    ;; Display command log buffer in a thin side window on the very right.
-    (add-to-list
-     'display-buffer-alist
-     `(" ?\\*command-log\\*"
-       (display-buffer-in-side-window)
-       (window-width . 42)
-       (side . right)
-       (slot . 1)
-       (window-parameters
-        ;; Do not allow switching to the command log buffer.
-        (no-other-window . t)
-        (mode-line-format . ("" " %b")))))
-    (with-eval-after-load 'org
-      (push 'org-beginning-of-line clm/log-command-exceptions*)
-      (push 'org-end-of-line clm/log-command-exceptions*)
-      (push 'org-self-insert-command clm/log-command-exceptions*)
-      (push 'org-delete-char clm/log-command-exceptions*)
-      (push 'org-delete-backward-char clm/log-command-exceptions*))
-    (with-eval-after-load 'isearch
-      (push 'isearch-printing-char clm/log-command-exceptions*)))
-#+end_src
-
 ***** Centered Text Body
 
 #+begin_src emacs-lisp :mkdirp yes :tangle .emacs
