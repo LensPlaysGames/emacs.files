@@ -868,6 +868,16 @@ This uses the built-in ~zone~ package.
   (setq vc-handled-backends nil)
 #+end_src
 
+**** Cursor customization
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  ;; Make the cursor stretch to cover wide characters, like tab. This
+  ;; makes them easier to see, without having to resort to whitespace
+  ;; mode.
+  (setq x-stretch-cursor t)
+#+end_src
+
+
 **** Show trailing whitespace
 
 #+begin_src emacs-lisp :mkdirp yes :tangle .emacs
