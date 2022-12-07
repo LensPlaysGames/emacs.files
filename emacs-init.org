@@ -792,37 +792,42 @@ Emacs has a +yule-log+ mode-line burning, and it smells like napalm!
 Zone out after three minutes!
 This uses the built-in ~zone~ package.
 
+This broke for me, in GNU Emacs 30.0.50 (build 1, x86_64-w64-mingw32),
+with the error message: "Error (use-package): Cannot load zone".
+Solution is to disable on versions 29 and newer, as the last one that
+worked was in Emacs 28.
+
 #+begin_src emacs-lisp :mkdirp yes :tangle .emacs
-  (use-package zone-rainbow
-    :defer t
-    :commands (zone-pgm-rainbow))
-  (use-package zone-sl
-    :defer t
-    :commands (zone-pgm-sl))
-  (use-package zone
-    :pin manual
-    :config
-    (defun zone-choose (pgm)
-      "Choose a zone program to run from zone-programs list."
-      (interactive
-       (list
-        (completing-read
-         "Program: "
-         (mapcar 'symbol-name zone-programs))))
-      (let ((zone-programs (list (intern pgm))))
-        (zone)))
-    ;; Use a subset of the default programs.
-    (setq zone-programs
-          [zone-pgm-drip
-           zone-pgm-explode
-           zone-pgm-paragraph-spaz
-           zone-pgm-putz-with-case
-           zone-pgm-2nd-putz-with-case
-           zone-pgm-rainbow
-           zone-pgm-stress-destress
-           zone-pgm-sl])
-    ;; After three minutes of being idle, zone out.
-    (zone-when-idle 180))
+  (when (< emacs-major-version 29)
+    (use-package zone-rainbow
+      :defer t
+      :commands (zone-pgm-rainbow))
+    (use-package zone-sl
+      :defer t
+      :commands (zone-pgm-sl))
+    (use-package zone
+      :config
+      (defun zone-choose (pgm)
+        "Choose a zone program to run from zone-programs list."
+        (interactive
+         (list
+          (completing-read
+           "Program: "
+           (mapcar 'symbol-name zone-programs))))
+        (let ((zone-programs (list (intern pgm))))
+          (zone)))
+      ;; Use a subset of the default programs.
+      (setq zone-programs
+            [zone-pgm-drip
+             zone-pgm-explode
+             zone-pgm-paragraph-spaz
+             zone-pgm-putz-with-case
+             zone-pgm-2nd-putz-with-case
+             zone-pgm-rainbow
+             zone-pgm-stress-destress
+             zone-pgm-sl])
+      ;; After three minutes of being idle, zone out.
+      (zone-when-idle 180)))
 #+end_src
 
 
