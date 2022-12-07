@@ -17,10 +17,9 @@ type it into a source block exactly like the one seen below.
 ** User Details
 
 #+begin_src emacs-lisp :mkdirp yes :tangle my-init.el
-  (setq user-full-name "Your Name Here")
-  (setq user-mail-address "your@email-here.com")
+  (setq user-full-name "Rylan Lens Kellogg")
+  (setq user-mail-address "lensplaysgames@gmail.com")
 #+end_src
-
 
 ** Load Theme
 
@@ -72,3 +71,566 @@ type it into a source block exactly like the one seen below.
   (run-at-time "2 sec" nil #'try-to-change-font)
 #+end_src
 
+** Custom Mode Line
+
+#+begin_src emacs-lisp :mkdirp yes :tangle my-init.el
+  ;;; Custom mode-line
+
+  ;; Make it big.
+  (set-face-attribute
+   'mode-line nil
+   :height 146)
+  (set-face-attribute
+   'mode-line-inactive nil
+   :height 132)
+
+  ;; Keep track of line count per-buffer. Needed by custom mode-line.
+  ;; Package source is found in =packages= subdirectory, and should be
+  ;; properly installed by the Install LISP in =emacs-init.org=.
+  (use-package line-count
+    :ensure nil
+    :pin manual)
+  ;; Show line count in modeline in all buffers.
+  (global-line-count-mode t)
+
+  ;; The rest of the +owl+ mode-line.
+  (defcustom simple-mode-line-fill-char
+    ?=
+    "If nothing else goes there, what should take it's place?"
+    :type 'character
+    :group 'lens
+    :group 'simple-mode-line)
+
+  ;; The rest of the ~owl~ mode-line.
+  (defcustom simple-mode-line-right-on-top
+    nil
+    "Should right-justified text should lay on top of left-justified text?"
+    :type 'boolean
+    :group 'lens
+    :group 'simple-mode-line)
+
+  (defun simple-mode-line-render (left &optional right width)
+    "Return a string of containing LEFT and RIGHT aligned respectively.
+
+        As much of LEFT as is possible is displayed.
+
+        If custom variable `simple-mode-line-right-on-top` is
+        non-nil, RIGHT will lay on top of LEFT, given the circumstance.
+        Otherwise, given there is not enough room to display RIGHT,
+        characters will be cut off starting at the beginning of RIGHT."
+    ;; Get width in columns of window, using character size of mode-line face.
+    (unless width
+      (let ((mode-line-face
+         (if (eq (selected-window)
+             mode-line-selected-window)
+         'mode-line
+           'mode-line-inactive)))
+    ;; I don't know why this is a few characters off, but it is,
+    ;; so I fix it by adding it back here. I think it may have
+    ;; something to do with text-scale-mode, or maybe we are
+    ;; getting number of characters in actual text viewport, and
+    ;; the entire mode line width isn't being used in the
+    ;; calculation. Or maybe both!
+    (setq width (+ 6 (window-max-chars-per-line
+              (selected-window)
+              mode-line-face)))))
+    ;; Ensure RIGHT is non-nil.
+    (unless right (setq right ""))
+    ;; Ensure LEFT is not too long.
+    (setq left (seq-take left width))
+    (let ((out-string (make-string width simple-mode-line-fill-char))
+      (available-width (- width (string-width left))))
+      (store-substring out-string 0 left)
+      (if (or simple-mode-line-right-on-top
+          (< (string-width right) available-width))
+      (store-substring
+       out-string
+       (- (length out-string) (length right))
+       right)
+    (store-substring
+     out-string
+     (- (length out-string) available-width)
+     (truncate-string-to-width
+      right
+      (length right)
+      (- (length right) available-width)))
+    )))
+
+  (defvar mode-line-selected-window
+    (selected-window)
+    "The currently selected window.
+    In other words, the window where the standard cursor appears.")
+
+  (defun mode-line-selected-window-update-from-windows (windows)
+    "Update mode-line-selected-window variable."
+    (unless (or (minibuffer-window-active-p (selected-window))
+        (window-dedicated-p (selected-window)))
+      (setq mode-line-selected-window (selected-window))))
+
+  ;; Keep mode-line-selected-window up-to-date.
+  (add-function
+   :after pre-redisplay-function
+   'mode-line-selected-window-update-from-windows)
+
+  (defvar mode-line-bottom-right-window
+    (selected-window)
+    "The window in the bottom right of the frame.")
+
+  (defun mode-line-bottom-right-window-update-from-windows (&rest windows)
+    "Update mode-line-bottom-right-window variable."
+    (dolist (window (window-list))
+      (unless (window-dedicated-p window)
+    (when (and (window-at-side-p window 'right)
+           (window-at-side-p window 'bottom))
+      (setq mode-line-bottom-right-window window)))))
+
+  ;; Keep mode-line-bottom-right-window up-to-date.
+  (add-function
+   :after pre-redisplay-function
+   'mode-line-bottom-right-window-update-from-windows)
+
+  (defvar mode-line-keycast-placeholder nil
+    "A placeholder for keycast to insert itself after in the mode line")
+
+  (setq-default
+   mode-line-position
+   (quote ((#("%l,%c" 0 5 (help-echo "Line number, Column number"))))))
+
+  (setq-default
+   mode-line-buffer-identification
+   (quote (#("%b" 0 2 (face mode-line-buffer-id help-echo "Buffer name")))))
+
+  (setq-default
+   mode-line-format
+   '((:eval
+      (simple-mode-line-render
+       ;; Left justified
+       (format-mode-line
+    '("|"
+      ("%e" "%e")
+      mode-line-front-space
+      mode-line-mule-info
+      mode-line-modified
+      " | " mode-line-buffer-identification
+      " | " (#("%I" 0 2 (help-echo "Buffer size")))
+      (line-count-mode (" | " line-count-mode-line))
+      " | " mode-name
+      " | " mode-line-position
+      " |"
+      ))
+       ;; Right justified
+       (format-mode-line
+    '(:eval
+      (when (eq (selected-window) mode-line-bottom-right-window)
+        '("| "
+          'mode-line-keycast-placeholder
+          " | "
+          ;; This isn't the best, as a lot of stuff gets put in
+          ;; misc-info (like eglot). I should create a custom
+          ;; misc-info that stores the time and system perf. stuff,
+          ;; then I can put this info at the end of the left side.
+          mode-line-misc-info
+          ))
+      "|"))))))
+
+  ;; Show time in mode line
+  (setq display-time-format "%Y-%m-%d %H:%M:%S")
+  (setq display-time-interval 1)
+  (setq display-time-load-average-threshold 0)
+  (display-time-mode t)
+
+  ;; Display column number in modeline.
+  (column-number-mode t)
+
+  ;; Show keybinds and commands in mode-line or tab-bar.
+  (use-package keycast
+    :config
+    (setq keycast-mode-line-format "%s%K%C%s%r%s")
+    (setq keycast-mode-line-insert-after 'mode-line-keycast-placeholder)
+    (setq keycast-mode-line-remove-tail-elements nil)
+    (keycast-mode t))
+#+end_src
+
+** Org Mode
+
+#+begin_src emacs-lisp :mkdirp yes :tangle my-init.el
+  ;;; org-mode config
+
+  (defun lens/org-insert-tilde ()
+    "Insert two tilde's and put the cursor in-between."
+    (interactive)
+    (insert "~~")
+    (backward-char))
+
+  (use-package org
+    :pin manual
+    :ensure nil
+    :defer t
+    :bind
+    (:map
+     org-mode-map
+     ;; The classic agenda keybind.
+     ("C-c a" . 'org-agenda)
+     ;; Make room for yasnippet insert snippet.
+     ("C-'" . nil)
+     ;; Easily change heading level without arrow keys!
+     ("M-p" . 'org-do-promote)
+     ("M-n" . 'org-do-demote)
+     ("M-P" . 'org-promote-subtree)
+     ("M-N" . 'org-demote-subtree)
+     ;; Make it easier to type tilde (for inline code examples).
+     ("C-c t" . 'lens/org-insert-tilde))
+    :config
+    (defvar org-journal-file
+      (expand-file-name "journal.org" org-directory)
+      "Path to Lens' journal org-mode file.")
+    (defvar org-blogs/general
+      "C:/Emacs/2022/lensor_site/org/blogs/general.org"
+      "Path to the Lensor Radii website General Blog.")
+    ;; Don't push headline tags to the right.
+    (setq org-tags-column 0)
+    ;; Do not ask yes/no when evaluating embedded code blocks with babel.
+    (setq org-confirm-babel-evaluate nil)
+    ;; Expand text and don't insert when typing in invisible area like "..."
+    (setq org-catch-invisible-edits 'show-and-error)
+    ;; Don't separate headings with blank lines.
+    (setq org-cycle-separator-lines 0)
+    ;; Indent list sub-items.
+    (setq org-list-indent-offset 1)
+    ;; Index deep into the tree with imenu.
+    (setq org-imenu-depth 6)
+    ;; Export deep headlines.
+    (setq org-export-headline-levels 6)
+    (org-babel-do-load-languages
+     'org-babel-load-languages
+     '((python . t)
+       (emacs-lisp . t)
+       (C . t)
+       (eshell . t)
+       (latex . t)
+       (makefile . t)
+       (js . t)
+       (perl . t)
+       )))
+
+  (use-package org-agenda
+    :pin manual
+    :ensure nil
+    :after (org)
+    :config
+    ;; Hide tags in agenda.
+    ;; They go off the right side of the screen for me.
+    (setq org-agenda-remove-tags t)
+    ;; Add journal file to org-agenda.
+    (add-to-list 'org-agenda-files org-journal-file)
+    ;; Show breadcrumbs in org-agenda TODO prefix
+    (add-to-list 'org-agenda-prefix-format '(todo . "%?b")))
+
+  (defun org-capture-under-heading ()
+    "Navigate under the prompted-for heading, inserting a new heading \
+            (respecting content) if it doesn't exist.
+
+            To be used within entry in 'org-capture-templates' variable like:
+            (file+function <FILE> org-capture-under-heading)"
+    (interactive "i")
+    (let* ((headline-regexp "^\\*+ +")
+           (headlines (matches-in-buffer (concat headline-regexp "\\(.*\\)") nil 1))
+           (capture-location (completing-read "Capture Location: " headlines)))
+      (widen)
+      (goto-char (point-min))
+      (if (re-search-forward (concat headline-regexp "\\(" capture-location "\\)") nil t)
+          (progn
+            (let ((shortest-match nil))
+              (dolist (match
+                       (matches-in-buffer
+                        (concat headline-regexp "\\(" capture-location ".*\\)") nil 1))
+                (when (or (eq shortest-match nil)
+                          (length< match (length shortest-match)))
+                  (setq shortest-match match)))
+              (goto-char (point-min))
+              (re-search-forward (concat headline-regexp shortest-match "$") nil t 1)))
+        (let ((org-insert-heading-respect-content t))
+          (org-insert-heading '(4) t t))
+        (insert capture-location))))
+
+  ;;; org-capture
+  (use-package org-capture
+    :pin manual
+    :ensure nil
+    :defer t
+    :bind
+    (("C-c c" . 'org-capture))
+    :config
+    (setq org-capture-templates
+          '(("j" "Lens' Journal Templates")
+            ;; Create a basic entry at the current date within the datetree.
+            ("jj" "dated entry" entry
+             (file+olp+datetree org-journal-file)
+             (function
+              (lambda ()
+                (concat
+                 "* %^{Topic}\n"
+                 "\n"
+                 "%?\n"
+                 "\n"
+                 "Captured on %U from [[%L][here]]")))
+             :prepend t
+             :empty-lines-before 1
+             :empty-lines-after 2)
+            ;; This allows creation of an agenda-visible task under
+            ;; a prompted-for headline within the journal org file.
+            ("jt" "TODO entry" entry
+             (file+function org-journal-file
+                            org-capture-under-heading)
+             (function
+              (lambda ()
+                (concat
+                 "* TODO %^{Topic}\n"
+                 "\n"
+                 "%?\n"
+                 "\n"
+                 "Captured on %U from [[%L][here]]"
+                 )))
+             :prepend t
+             :empty-lines-before 1
+             :empty-lines-after 2)
+            ;; I use this when I want to journal about a certain topic.
+            ;; i.e. "LensorOS", "Emacs", etc.
+            ("je" "Topical entry" entry
+             (file+function org-journal-file
+                            org-capture-under-heading)
+             (function
+              (lambda ()
+                (concat
+                 "* %^{Topic}\n"
+                 "\n"
+                 "%?\n"
+                 "\n"
+                 "Captured on %U from [[%L][here]]")))
+             :prepend t
+             :empty-lines-before 1
+             :empty-lines-after 2)
+            ;; Add a blog post to the General blog of the Lensor Radii Org website.
+            ("w" "Lens' Website Templates")
+            ("wb" "Blog Post Templates")
+            ("wbg" "General Blog Post" entry
+             (file+olp+datetree org-blogs/general)
+             (function
+              (lambda ()
+                (concat
+                 "* %^{Topic}\n"
+                 ":PROPERTIES:\n"
+                 ":HTML_CONTAINER_CLASS: blog-post\n"
+                 ":HTML_HEADLINE_CLASS:  blog-post-title\n"
+                 ":END:\n"
+                 "%<%Y-%m-%d>\n"
+                 "\n"
+                 "%?"
+                 "\n"
+                 "\n"
+                 "-----")))
+             :tree-type month
+             :prepend t
+             :empty-lines-before 1
+             :empty-lines-after 2)
+            )))
+
+  (use-package org-modern
+    :pin melpa ;; Both GNU ELPA and MELPA have org-modern
+    :after (org))
+
+  ;;; org-mode exporting
+
+  ;; Export org to GitHub flavored markdown.
+  (use-package ox-gfm
+    :after (org))
+
+  ;; Export org to (other) markup languages using Pandoc.
+  ;; https://github.com/a-fent/ox-pandoc
+  (use-package ox-pandoc
+    :after (org)
+    :custom
+    (org-pandoc-menu-entry
+     '((?4 "to html4 and open."      org-pandoc-export-to-html4-and-open)
+       (?5 "to html5 and open."      org-pandoc-export-to-html5-and-open)
+       (?% "to html5-pdf and open"   org-pandoc-export-to-html5-pdf-and-open)
+
+       (?c "to commonmark and open." org-pandoc-export-to-commonmark-and-open)
+       (?g "to gfm and open."        org-pandoc-export-to-gfm-and-open)
+
+       (?r "to rst and open."        org-pandoc-export-to-rst-and-open)
+
+       (?t "to texinfo and open."    org-pandoc-export-to-texinfo-and-open)
+       (?m "to man and open."        org-pandoc-export-to-man-and-open)
+
+       (?R "to rtf and open."        org-pandoc-export-to-rtf-and-open)
+       (?o "to odt."                 org-pandoc-export-to-odt)
+
+       (?l "to latex and open"       org-pandoc-export-to-latex-and-open)
+       (?L "to latex-pdf and open"   org-pandoc-export-to-latex-pdf-and-open)
+
+       (?e "to epub3"                org-pandoc-export-to-epub3)
+       )))
+#+end_src
+
+** C++ Mode Hook
+
+#+begin_src emacs-lisp :mkdirp yes :tangle my-init.el
+  ;; c++-mode custom hook.
+  (defun my-c++-mode-hook ()
+    "Set default indentation style to four spaces (stroustrup).
+    Add a hook to untabify the buffer before every save."
+    (c-set-offset 'substatement-open 0)
+    (setq c-basic-offset 4)
+    ;; Untabify before saving.
+    (add-hook 'before-save-hook 'untabify-buffer nil t))
+  (add-hook 'c++-mode-hook 'my-c++-mode-hook)
+#+end_src
+
+** Grow/Shrink Window Horizontally
+
+While there is ~enlarge-window~ and ~shrink-window~, they don't really
+correspond to moving the border a certain direction, which is how I
+conceptualize window resizing in my head. This allows having keybinds
+that aren't as confusing as the default ~C-x {~ and ~C-x }~.
+
+#+begin_src emacs-lisp :mkdirp yes :tangle my-init.el
+  ;; Move vertical window border left/right by 5 columns.
+  (defun xor (b1 b2)
+    "Exclusive or of its two arguments."
+    (or (and b1 b2)
+        (and (not b1) (not b2))))
+
+  (defun move-border-left-or-right (arg dir)
+    "General function covering move-border-left and move-border-right.
+    If DIR is right, then move left, otherwise move right."
+    (interactive)
+    (if (null arg) (setq arg 5))
+    (let ((left-edge (nth 0 (window-edges))))
+      (if (xor (= left-edge 0) dir)
+          (shrink-window arg t)
+        (enlarge-window arg t))))
+
+  (defun move-border-left (arg)
+    "If this is a window with its right edge being the edge
+  of the screen, enlarge the window horizontally. If this is a window
+  with its left edge being the edge of the screen, shrink the window
+  horizontally. Otherwise, default to enlarging horizontally.
+
+  Enlarge/Shrink by ARG columns, or 5 if arg is nil."
+    (interactive "P")
+    (move-border-left-or-right arg t))
+
+  (defun move-border-right (arg)
+    "If this is a window with its right edge being the edge of
+  the screen, shrink the window horizontally. If this is a window
+  with its left edge being the edge of the screen, enlarge the window
+  horizontally. Otherwise, default to shrinking horizontally.
+
+  Enlarge/Shrink by ARG columns, or 5 if arg is nil."
+    (interactive "P")
+    (move-border-left-or-right arg nil))
+#+end_src
+
+** Custom `read-buffer-to-switch`
+
+#+begin_src emacs-lisp :mkdirp yes :tangle my-init.el
+  ;; Allow buffers visible in other windows to be the
+  ;; default interactive completion argument by advising
+  ;; `read-buffer-to-switch` from window.el built-in lisp.
+  (defun my-read-buffer-to-switch (prompt)
+    "Read the name of a buffer to switch to, prompting with PROMPT.
+    Return the name of the buffer as a string.
+
+    This function is intended for the `switch-to-buffer' family of
+    commands since these need to omit the name of the current buffer
+    from the list of completions and default values.
+
+    Allow buffers visible in other windows to be default argument."
+    (let ((rbts-completion-table (internal-complete-buffer-except)))
+      (minibuffer-with-setup-hook
+          (lambda ()
+            (setq minibuffer-completion-table rbts-completion-table)
+            ;; Since rbts-completion-table is built dynamically, we
+            ;; can't just add it to the default value of
+            ;; icomplete-with-completion-tables, so we add it
+            ;; here manually.
+            (if (and (boundp 'icomplete-with-completion-tables)
+                     (listp icomplete-with-completion-tables))
+                (setq-local icomplete-with-completion-tables
+                            (cons rbts-completion-table
+                                  icomplete-with-completion-tables))))
+        (read-buffer prompt (other-buffer (current-buffer) t) ;; <- I put a `t` here.
+                     (confirm-nonexistent-file-or-buffer)))))
+  (advice-add 'read-buffer-to-switch :override 'my-read-buffer-to-switch)
+#+end_src
+
+** Python Windows Store Fix
+
+#+begin_src emacs-lisp :mkdirp yes :tangle my-init.el
+  ;; Tell Emacs how to run python (it's annoying on Windows and launches Windows Store).
+  (eval-after-load "python"
+    '(progn
+       (setq python-shell-interpreter "python")
+       (setq python-shell-interpreter-args "-i")))
+#+end_src
+
+
+** Run PowerShell within Emacs
+
+#+begin_src emacs-lisp :mkdirp yes :tangle my-init.el
+  ;; Run PowerShell within Emacs.
+  (defvar powershell-exec-cmd "\"c:/Program Files/PowerShell/7/pwsh.exe\" -"
+    "Command to run PowerShell executable. Used by 'run-powershell'.")
+  (defun run-powershell ()
+    "Run Powershell in an interactive Emacs buffer."
+    (interactive)
+    (async-shell-command powershell-exec-cmd nil nil))
+#+end_src
+
+** LITE LISP extension recognition
+
+#+begin_src emacs-lisp :mkdirp yes :tangle my-init.el
+  ;; Load files with `.lt` extension as LITE LISP (lisp-mode).
+  (add-to-list 'auto-mode-alist '("\\.lt\\'" . lisp-mode))
+#+end_src
+
+** Custom =*scratch*= Buffer Initial Message
+
+#+begin_src emacs-lisp :mkdirp yes :tangle my-init.el
+  (setq initial-scratch-message
+        "
+
+
+
+                           ,.
+                          o  \\\\
+                              \\\\
+                               \\\\
+                                \\\\
+                                 \\\\
+                                 / \\
+                                // \\\\
+                               //   \\\\
+                              //     \\\\
+                             //       \\\\_,
+
+
+
+
+  ")
+#+end_src
+
+
+** Treesit FUNCompiler language syntax highlighting
+
+#+begin_src emacs-lisp :mkdirp yes :tangle my-init.el
+  (setq tree-sitter-load-path '("d:/Programming/treesitter/tree-sitter-un/bld"))
+  (setq treesit-extra-load-path '("d:/Programming/treesitter/tree-sitter-un/bld"))
+#+end_src
+
+** Customize FUNCompiler language syntax highlighting
+
+#+begin_src emacs-lisp :mkdirp yes :tangle my-init.el
+  (setq un-mode-face-operators 'font-lock-constant-face)
+#+end_src
