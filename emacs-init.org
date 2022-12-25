@@ -337,6 +337,7 @@ manually in these org files, and for my code comments.
   (defun lens/wrap-comment ()
     (interactive)
     (let ((original-point (point)))
+      (beginning-of-line)
       (beginning-of-line-text)
       (let ((prefix (buffer-substring (line-beginning-position) (point))))
         (wrap-at-column 72 prefix nil original-point))))
