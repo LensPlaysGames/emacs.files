@@ -952,6 +952,18 @@ worked was in Emacs 28.
         kept-old-versions 10)
 #+end_src
 
+**** Native/Byte Compilation warnings
+
+Disable some warning types for byte compilation, as they can be quite
+annoying when a package is installed or updated or when Emacs starts
+up, for example.
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  ;; Disable some warning types for byte compilation
+  ;; Use `M-X describe-variable byte-compile-warnings` for more info
+  (setq byte-compile-warnings '(not docstrings free-vars))
+#+end_src
+
 **** Set default file encoding (UTF-8)
 
 #+begin_src emacs-lisp :mkdirp yes :tangle .emacs
