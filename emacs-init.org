@@ -581,6 +581,16 @@ Exclude them by defining ~emacs-init/use-every-package~ to nil.
     ("\\.nasm\\|.asm\\'" . nasm-mode))
 #+end_src
 
+***** D
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  ;;; D
+  ;; https://dlang.org/
+  (use-package d-mode
+    :mode
+    ("\\.d\\'" . d-mode))
+#+end_src
+
 ***** Markdown
 
 #+begin_src emacs-lisp :mkdirp yes :tangle .emacs
@@ -619,7 +629,6 @@ Exclude them by defining ~emacs-init/use-every-package~ to nil.
   (use-package rust-mode
     :mode
     ("\\.rs\\'" . rust-mode))
-
 #+end_src
 
 ***** Zig
