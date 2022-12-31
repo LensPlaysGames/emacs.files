@@ -295,6 +295,9 @@ Basically, take the current line and split it into multiple lines
 broken before a specific column and between words. Similar to what I do
 manually in these org files, and for my code comments.
 
+TODO: It would be cool if lens/wrap-comment didn't just use 72
+hardcoded, but 72 from the beginning of the text on the line...
+
 #+begin_src emacs-lisp :mkdirp yes :tangle .emacs
   (defconst wrap-at-column-whitespace "\t\n\r "
     "All characters within this string at end of each line in
@@ -337,6 +340,7 @@ manually in these org files, and for my code comments.
   (defun lens/wrap-comment ()
     (interactive)
     (let ((original-point (point)))
+      (beginning-of-line)
       (beginning-of-line-text)
       (let ((prefix (buffer-substring (line-beginning-position) (point))))
         (wrap-at-column 72 prefix nil original-point))))
@@ -348,6 +352,18 @@ writing plain text and being able to cap paragraphs at a certain
 length line.
 
 [2022-09-12 Mon 16:26]
+
+***** Disable all themes (they stack)
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  ;; Disable all themes (they stack and can only be disabled one-by-one,
+  ;; by default)
+  (defun disable-all-themes ()
+    "Disable all themes found in 'custom-enabled-themes' list variable."
+    (interactive)
+    ;; TODO: Do I need a defvar for custom-enabled-themes here?
+    (mapcar (lambda (x) (disable-theme x)) custom-enabled-themes))
+#+end_src
 
 **** Open New Frames in Fullscreen
 
@@ -581,6 +597,16 @@ Exclude them by defining ~emacs-init/use-every-package~ to nil.
     ("\\.nasm\\|.asm\\'" . nasm-mode))
 #+end_src
 
+***** D
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  ;;; D
+  ;; https://dlang.org/
+  (use-package d-mode
+    :mode
+    ("\\.d\\'" . d-mode))
+#+end_src
+
 ***** Markdown
 
 #+begin_src emacs-lisp :mkdirp yes :tangle .emacs
@@ -619,7 +645,6 @@ Exclude them by defining ~emacs-init/use-every-package~ to nil.
   (use-package rust-mode
     :mode
     ("\\.rs\\'" . rust-mode))
-
 #+end_src
 
 ***** Zig
@@ -905,15 +930,15 @@ worked was in Emacs 28.
 
 #+begin_src emacs-lisp :mkdirp yes :tangle .emacs
   ;; Display compilation buffer in a thin side window on the very right.
-  (add-to-list
-   'display-buffer-alist
+  (push
    `("\\*compilation\\*"
      (display-buffer-in-side-window)
-     (window-width . 42)
+     (window-width . 0.18)
      (side . right)
      (slot . 1)
      (window-parameters
-      (mode-line-format . ("" " %b")))))
+      (mode-line-format . ("" " %b"))))
+   display-buffer-alist)
 
   ;; Scroll `*compilation*` buffer automatically.
   (setq compilation-scroll-output t)
@@ -937,6 +962,18 @@ worked was in Emacs 28.
         delete-old-versions t
         kept-new-versions 15
         kept-old-versions 10)
+#+end_src
+
+**** Native/Byte Compilation warnings
+
+Disable some warning types for byte compilation, as they can be quite
+annoying when a package is installed or updated or when Emacs starts
+up, for example.
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  ;; Disable some warning types for byte compilation
+  ;; Use `M-X describe-variable byte-compile-warnings` for more info
+  (setq byte-compile-warnings '(not docstrings free-vars))
 #+end_src
 
 **** Set default file encoding (UTF-8)
