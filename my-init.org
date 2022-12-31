@@ -622,11 +622,22 @@ that aren't as confusing as the default ~C-x {~ and ~C-x }~.
 #+end_src
 
 
-** Treesit FUNCompiler language syntax highlighting
+** Treesit language syntax highlighting
 
 #+begin_src emacs-lisp :mkdirp yes :tangle my-init.el
-  (setq tree-sitter-load-path '("d:/Programming/treesitter/tree-sitter-un/bld"))
-  (setq treesit-extra-load-path '("d:/Programming/treesitter/tree-sitter-un/bld"))
+  (setq tree-sitter-major-mode-language-alist '((un-mode . un) (un-ts-mode . un)))
+  (setq tree-sitter-load-path   '("d:/Programming/treesitter/tree-sitter-un/bld" "~/.tree_sitter/bin"))
+  (setq treesit-extra-load-path '("d:/Programming/treesitter/tree-sitter-un/bld" "~/.tree_sitter/bin"))
+  (push '("\\.xs\\'"          . c-ts-mode) auto-mode-alist)
+  (push '("\\.i\\'"           . c-ts-mode) auto-mode-alist)
+  (push '("\\.lex\\'"         . c-ts-mode) auto-mode-alist)
+  (push '("\\.y\\(acc\\)?\\'" . c-ts-mode) auto-mode-alist)
+  (push '("\\.\\(CC?\\|HH?\\)\\'"            . c++-ts-mode) auto-mode-alist)
+  (push '("\\.[ch]\\(pp\\|xx\\|\\+\\+\\)\\'" . c++-ts-mode) auto-mode-alist)
+  (push '("\\.\\(cc\\|hh\\)\\'"              . c++-ts-mode) auto-mode-alist)
+  (push '("\\.c\\'"           . c-ts-mode) auto-mode-alist)
+  (setq-default treesit-font-lock-level 4)
+  (treesit-font-lock-recompute-features)
 #+end_src
 
 ** Customize FUNCompiler language syntax highlighting
