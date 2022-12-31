@@ -358,13 +358,12 @@ length line.
 #+begin_src emacs-lisp :mkdirp yes :tangle .emacs
   ;; Disable all themes (they stack and can only be disabled one-by-one,
   ;; by default)
-  (defun disable-all-themes()
+  (defun disable-all-themes ()
     "Disable all themes found in 'custom-enabled-themes' list variable."
-    (interactive "i")
+    (interactive)
     ;; TODO: Do I need a defvar for custom-enabled-themes here?
     (mapcar (lambda (x) (disable-theme x)) custom-enabled-themes))
 #+end_src
-
 
 **** Open New Frames in Fullscreen
 
