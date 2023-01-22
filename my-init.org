@@ -656,3 +656,38 @@ TODO: Is this still needed?
 #+begin_src emacs-lisp :mkdirp yes :tangle my-init.el
   (setq un-mode-face-operators 'font-lock-constant-face)
 #+end_src
+
+** ERC config (IRC)
+
+#+begin_src emacs-lisp :mkdirp yes :tangle my-init.el
+  ;; This *looks* cool, but doesn't work due to using outdated API(s).
+  ;; https://github.com/vibhavp/erc-twitch
+
+  ;; NOTE: For some reason, ERC can *never* find the network name, and
+  ;; we always end up with "Unknown", or "-".
+  (setq erc-rename-buffers nil)
+
+  ;; Disable time stamp (useless in twitch chat, really)
+  (setq erc-timestamp-format nil)
+
+  ;; Enable mIRC color codes
+  (setq erc-interpret-mirc-color t)
+
+  (add-to-list 'erc-autojoin-channels-alist '(ttv "#lens_r"))
+  ;; Requires "erc-secret.key" file to contain implicit grant flow
+  ;; OAuth token from Twitch. You can generate one here:
+  ;; https://twitchapps.com/tmi/
+  (defun lens/chat ()
+    "Join Lens_r chatroom in new window with ERC (TLS)
+  Uses file at 'erc-secret.key' as password; populate it with OAuth.
+  You can generate an OAuth token here: https://twitchapps.com/tmi/"
+    (interactive)
+    (erc-tls :server "irc.chat.twitch.tv" :port 6697
+             :id 'ttv
+             :nick "lens_r"
+             :full-name "Lens_r"
+             :password (with-current-buffer (find-file-noselect "erc-secret.key" nil t) (buffer-string)))
+    (erc-hide-timestamps)
+    (erc-timestamp-mode -1))
+#+end_src
+
