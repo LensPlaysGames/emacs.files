@@ -482,9 +482,12 @@ type it into a source block exactly like the one seen below.
     Add a hook to untabify the buffer before every save."
     (c-set-offset 'substatement-open 0)
     (setq c-basic-offset 4)
+    (setq c-ts-mode-basic-offset 4)
+    (setq c-ts-mode-indent-offset 4)
     ;; Untabify before saving.
     (add-hook 'before-save-hook 'untabify-buffer nil t))
   (add-hook 'c++-mode-hook 'my-c++-mode-hook)
+  (add-hook 'c++-ts-mode-hook 'my-c++-mode-hook)
 #+end_src
 
 ** Grow/Shrink Window Horizontally
