@@ -675,9 +675,7 @@ TODO: Is this still needed?
     (setq erc-rename-buffers nil)
     ;; Disable time stamp (useless in twitch chat, really)
     (setq erc-timestamp-format nil)
-    ;; Enable mIRC color codes
-    (setq erc-interpret-mirc-color t)
-    (setq erc-autojoin-channels-alist '(ttv "#lens_r"))
+    (setq erc-autojoin-channels-alist '((ttv "#lens_r")))
     ;; Requires "erc-secret.key" file to contain implicit grant flow
     ;; OAuth token from Twitch. You can generate one here:
     ;; https://twitchapps.com/tmi/
