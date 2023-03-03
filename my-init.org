@@ -692,6 +692,16 @@ TODO: Is this still needed?
                :full-name "Lens_r"
                :password (with-current-buffer (find-file-noselect "erc-secret.key" nil t) (buffer-string)))
       (erc-hide-timestamps)
-      (erc-timestamp-mode -1)))
+      (erc-timestamp-mode -1)
+      (erc-fill-mode -1)))
+#+end_src
+
+** DocView config
+
+#+begin_src emacs-lisp :mkdirp yes :tangle my-init.el
+  (use-package doc-view
+    :defer t
+    :config
+    (setq doc-view-resolution 300))
 #+end_src
 
