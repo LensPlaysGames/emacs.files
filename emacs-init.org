@@ -544,9 +544,9 @@ Exclude them by defining ~emacs-init/use-every-package~ to nil.
     :custom-face
     (fic-face
      ((t (:background
-          nil
+          "unspecified"
           :foreground
-          nil
+          "unspecified"
           :underline
           (:color "red" :style wave)
           )))))
