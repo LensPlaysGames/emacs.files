@@ -704,3 +704,8 @@ TODO: Is this still needed?
     (setq doc-view-resolution 300))
 #+end_src
 
+** Default Directory (startup)
+
+#+begin_src emacs-lisp :mkdirp yes :tangle my-init.el
+  (setq default-directory "D:/Programming/")
+#+end_src
