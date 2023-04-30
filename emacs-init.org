@@ -822,6 +822,11 @@ with the error message: "Error (use-package): Cannot load zone".
 Solution is to disable on versions 29 and newer, as the last one that
 worked was in Emacs 28.
 
+Update: It is likely that this build of Emacs doesn't have the "play"
+directory included for some reason. Things like ~tetris~, ~life~, etc
+are all missing. So this config is fine, it's just my Emacs binaries
+that are messed up.
+
 #+begin_src emacs-lisp :mkdirp yes :tangle .emacs
   (when (< emacs-major-version 29)
     (use-package zone-rainbow
