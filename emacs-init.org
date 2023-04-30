@@ -657,6 +657,17 @@ Exclude them by defining ~emacs-init/use-every-package~ to nil.
     ("\\.zig\\'" . zig-mode))
 #+end_src
 
+***** EBNF
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  ;;; EBNF -- Extended Backus-Naur Form
+  ;; https://github.com/nverno/ebnf-mode
+  (use-package ebnf-mode
+    :mode
+    ("\\.bnf\\'" . ebnf-mode))
+#+end_src
+
+
 **** A e s t h e t i c
 
 ***** Ligatures
