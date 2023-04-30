@@ -27,6 +27,16 @@
 
 ;; KEKW
 
+;; NOTE: According to the license this repo is distributed under, it's
+;; not really lawful for me to distribute the emoji images that are
+;; supposed to be in the `emotes` subdirectory at the time of loading.
+;; You can view this as a plus: you get to choose custom emote images
+;; to display in *your* Emacs Twitch Chat. Downside is it can be kind
+;; of annoying to find good images, so here's a few suggestions on
+;; where one might get images *for personal use*.
+;;   https://emoji.gg/
+;;   https://discadia.com/emojis/
+
 ;; For use in ERC twitch chat: (setq ttv-image-mode-erc-refresh t)
 
 ;;; Code:
