@@ -295,9 +295,6 @@ Basically, take the current line and split it into multiple lines
 broken before a specific column and between words. Similar to what I do
 manually in these org files, and for my code comments.
 
-TODO: It would be cool if lens/wrap-comment didn't just use 72
-hardcoded, but 72 from the beginning of the text on the line...
-
 #+begin_src emacs-lisp :mkdirp yes :tangle .emacs
   (defconst wrap-at-column-whitespace "\t\n\r "
     "All characters within this string at end of each line in
@@ -343,7 +340,7 @@ hardcoded, but 72 from the beginning of the text on the line...
       (beginning-of-line)
       (beginning-of-line-text)
       (let ((prefix (buffer-substring (line-beginning-position) (point))))
-        (wrap-at-column 72 prefix nil original-point))))
+        (wrap-at-column (+ 72 (- (point) (line-beginning-position))) prefix nil original-point))))
 #+end_src
 
 This is actually incredibly useful, as long comments can be organized
