@@ -568,6 +568,8 @@ Exclude them by defining ~emacs-init/use-every-package~ to nil.
 I used to use ~company-mode~ and activate it manually, but now I use corfu + cape.
 
 #+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  ;;; corfu
+  ;; https://github.com/minad/corfu
   (use-package corfu
     ;; Optional customizations
     :custom
@@ -591,15 +593,24 @@ I used to use ~company-mode~ and activate it manually, but now I use corfu + cap
     ;; Recommended: Enable Corfu globally.
     ;; This is recommended since Dabbrev can be used globally (M-/).
     ;; See also `corfu-exclude-modes'.
-    :init
+    :config
     (global-corfu-mode 1)
     (corfu-popupinfo-mode 1))
 
+  (defun lens/cape-capf-prog-setup ()
+    "Setup 'completion-at-point-functions' for programming derived modes."
+    (add-to-list 'completion-at-point-functions 'cape-file)
+    (add-to-list 'completion-at-point-functions 'cape-keyword))
+
+
+  (add-to-list 'completion-at-point-functions 'cape-dabbrev)
+  (add-to-list 'completion-at-point-functions 'cape-elisp-block)
+
+  ;;; cape
+  ;; https://github.com/minad/cape
   (use-package cape
+    :hook (prog-mode . lens/cape-capf-prog-setup)
     :config
-    (add-to-list 'completion-at-point-functions #'cape-dabbrev)
-    (add-to-list 'completion-at-point-functions #'cape-file)
-    (add-to-list 'completion-at-point-functions #'cape-elisp-block)
     (advice-add 'eglot-completion-at-point :around #'cape-wrap-buster))
 #+end_src
 
