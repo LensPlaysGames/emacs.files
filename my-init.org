@@ -689,7 +689,7 @@ TODO: Is this still needed?
                :id 'ttv
                :nick "lens_r"
                :full-name "Lens_r"
-               :password (with-current-buffer (find-file-noselect "erc-secret.key" nil t) (buffer-string)))
+               :password (with-current-buffer (find-file-noselect "c:/Emacs/emacs.files/erc-secret.key" nil t) (let ((out (buffer-string))) (kill-buffer) out)))
       (erc-hide-timestamps)
       (erc-timestamp-mode -1)
       (erc-fill-mode -1)))
