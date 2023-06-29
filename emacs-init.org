@@ -362,6 +362,22 @@ length line.
     (mapcar (lambda (x) (disable-theme x)) custom-enabled-themes))
 #+end_src
 
+***** Filename-Compatible Timestamp
+
+Timestamps often don't end up in a format that is usable within a
+filename; this one is, while still adhering to ISO 8601 specification.
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  (defun filename-timestamp ()
+    "Return a string containing the current time adhering to ISO 8601 format
+  while not using any illegal characters in filenames, like `:`."
+    (interactive)
+    (let ((timestamp-string (format-time-string "%FT%H%M%S%z")))
+      (if (called-interactively-p)
+          (message "It is currently %s" timestamp-string)
+        timestamp-string)))
+#+end_src
+
 **** Open New Frames in Fullscreen
 
 #+begin_src emacs-lisp :mkdirp yes :tangle .emacs
