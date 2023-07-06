@@ -319,15 +319,20 @@ manually in these org files, and for my code comments.
             (if word
                 (backward-word)
               (backward-sexp)))
-          ;; TODO: Move behind opening parens/braces/quotes.
+          ;; Move behind opening parens/braces/quotes.
+          (when (or (eq ?\( (char-before))
+                    (eq ?\[ (char-before))
+                    (eq ?\{ (char-before)))
+            (backward-char))
           ;; Delete whitespace at end of line...
+          ;; Delete whitespace forwards...
           (skip-chars-forward wrap-at-column-whitespace)
+          ;; Delete whitespace backwards...
           (let ((end (point)))
             (skip-chars-backward wrap-at-column-whitespace)
             (delete-region (point) end))
           (newline)
-          (when prefix
-            (insert prefix))
+          (when prefix (insert prefix))
           (wrap-at-column column prefix word original-point))
       (goto-char original-point)))
 
@@ -341,7 +346,7 @@ manually in these org files, and for my code comments.
       (beginning-of-line)
       (beginning-of-line-text)
       (let ((prefix (buffer-substring (line-beginning-position) (point))))
-        (wrap-at-column (+ 72 (- (point) (line-beginning-position))) prefix nil original-point))))
+        (wrap-at-column (+ 72 (- (point) (line-beginning-position))) prefix t original-point))))
 #+end_src
 
 This is actually incredibly useful, as long comments can be organized
