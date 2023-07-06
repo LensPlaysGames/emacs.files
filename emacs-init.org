@@ -378,6 +378,8 @@ filename; this one is, while still adhering to ISO 8601 specification.
         timestamp-string)))
 #+end_src
 
+***** TODO Snake Case to Camel Case Converter
+
 **** Open New Frames in Fullscreen
 
 #+begin_src emacs-lisp :mkdirp yes :tangle .emacs
@@ -1058,4 +1060,10 @@ up, for example.
   (setq default-buffer-file-coding-system 'utf-8)
 #+end_src
 
+**** Truncate Long Lines, Don't Wrap
 
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  ;; ARG being positive means to truncate long lines; otherwise, they'd
+  ;; be folded
+  (toggle-truncate-lines 1)
+#+end_src
