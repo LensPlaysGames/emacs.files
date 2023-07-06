@@ -319,6 +319,7 @@ manually in these org files, and for my code comments.
             (if word
                 (backward-word)
               (backward-sexp)))
+          ;; TODO: Move behind opening parens/braces/quotes.
           ;; Delete whitespace at end of line...
           (skip-chars-forward wrap-at-column-whitespace)
           (let ((end (point)))
@@ -377,6 +378,8 @@ filename; this one is, while still adhering to ISO 8601 specification.
           (message "It is currently %s" timestamp-string)
         timestamp-string)))
 #+end_src
+
+***** TODO Snake Case to Camel Case Converter
 
 **** Open New Frames in Fullscreen
 
@@ -597,12 +600,12 @@ I used to use ~company-mode~ and activate it manually, but now I use corfu + cap
     (corfu-popupinfo-delay 0.2)
 
     :config
-    ;; Corfu annoyingly rebinds beginning-of-line and end-of-line. No bueno.
-    (keymap-unset corfu-map "<remap> <move-beginning-of-line>" t)
-    (keymap-unset corfu-map "<remap> <move-end-of-line>" t)
     ;; Enable Corfu globally.
     (global-corfu-mode 1)
-    (corfu-popupinfo-mode 1))
+    (corfu-popupinfo-mode 1)
+    ;; Corfu annoyingly rebinds beginning-of-line and end-of-line. No bueno.
+    (keymap-unset corfu-map "<remap> <move-beginning-of-line>" t)
+    (keymap-unset corfu-map "<remap> <move-end-of-line>" t))
 
   (defun lens/cape-capf-prog-setup ()
     "Setup 'completion-at-point-functions' for programming derived modes."
@@ -613,11 +616,14 @@ I used to use ~company-mode~ and activate it manually, but now I use corfu + cap
     "Setup 'completion-at-point-functions' for 'org-mode'."
     (add-to-list 'completion-at-point-functions 'cape-elisp-block))
 
-  (setq-default completion-at-point-functions '(cape-dabbrev pcomplete-completions-at-point))
+  (setq-default completion-at-point-functions '(cape-dabbrev))
 
   ;;; cape
   ;; https://github.com/minad/cape
   (use-package cape
+    :custom
+    (cape-dabbrev-min-length 0)
+    (cape-dabbrev-check-other-buffers nil)
     :hook
     (prog-mode . lens/cape-capf-prog-setup)
     (org-mode . lens/cape-capf-org-setup)
@@ -1063,4 +1069,10 @@ up, for example.
   (setq default-buffer-file-coding-system 'utf-8)
 #+end_src
 
+**** Truncate Long Lines, Don't Wrap
 
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  ;; ARG being positive means to truncate long lines; otherwise, they'd
+  ;; be folded
+  (toggle-truncate-lines 1)
+#+end_src
