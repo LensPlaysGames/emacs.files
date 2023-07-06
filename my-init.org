@@ -69,6 +69,6 @@ type it into a source block exactly like the one seen below.
       (set-frame-font "DejaVuSansMono NF" nil t))
      ((member "Courier New" (font-family-list))
       (set-frame-font "Courier New" nil t))))
-  (run-at-time "2 sec" nil #'try-to-change-font)
+  (run-at-time "4 sec" nil #'try-to-change-font)
 #+end_src
 
