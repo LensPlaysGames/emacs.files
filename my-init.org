@@ -653,14 +653,6 @@ that aren't as confusing as the default ~C-x {~ and ~C-x }~.
   (treesit-font-lock-recompute-features)
 #+end_src
 
-** Customize FUNCompiler language syntax highlighting
-
-TODO: Is this still needed?
-
-#+begin_src emacs-lisp :mkdirp yes :tangle my-init.el
-  (setq un-mode-face-operators 'font-lock-constant-face)
-#+end_src
-
 ** ERC config (IRC)
 
 #+begin_src emacs-lisp :mkdirp yes :tangle my-init.el
