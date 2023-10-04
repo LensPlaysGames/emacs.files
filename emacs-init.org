@@ -85,6 +85,9 @@ Execute source block under point in ~org-mode~ using ~org-babel~:
     (copy-file "my-init.el" (expand-file-name "my-init.el" user-emacs-directory) t)
 
     (message "Installing packages...")
+    ;; Create `.emacs.d/lisp/` directory if it doesn't already exist.
+    (unless (file-exists-p (expand-file-name "lisp" user-emacs-directory))
+      (make-directory (expand-file-name "lisp" user-emacs-directory)))
     (dolist (package (directory-files "packages" t "\\.el$"))
       (let ((package-install-path (expand-file-name
                    (file-name-nondirectory package)
