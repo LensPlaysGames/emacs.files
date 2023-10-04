@@ -672,16 +672,17 @@ that aren't as confusing as the default ~C-x {~ and ~C-x }~.
     ;; Requires "erc-secret.key" file to contain implicit grant flow
     ;; OAuth token from Twitch. You can generate one here:
     ;; https://twitchapps.com/tmi/
+    ;; TODO: I forgot to copy this file and now I have to generate a new one. Rat balls.
     (defun lens/chat ()
       "Join Lens_r chatroom in new window with ERC (TLS)
   Uses file at 'erc-secret.key' as password; populate it with OAuth.
   You can generate an OAuth token here: https://twitchapps.com/tmi/"
       (interactive)
       (erc-tls :server "irc.chat.twitch.tv" :port 6697
-               :id 'ttv
-               :nick "lens_r"
-               :full-name "Lens_r"
-               :password (with-current-buffer (find-file-noselect "c:/Emacs/emacs.files/erc-secret.key" nil t) (let ((out (buffer-string))) (kill-buffer) out)))
+	       :id 'ttv
+	       :nick "lens_r"
+	       :full-name "Lens_r"
+	       :password (with-current-buffer (find-file-noselect "c:/Emacs/emacs.files/erc-secret.key" nil t) (let ((out (buffer-string))) (kill-buffer) out)))
       (erc-hide-timestamps)
       (erc-timestamp-mode -1)
       (erc-fill-mode -1)))
