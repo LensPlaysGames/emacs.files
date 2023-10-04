@@ -60,12 +60,12 @@ type it into a source block exactly like the one seen below.
   (defun try-to-change-font ()
     "Attempt to find fonts that I like, and use the first one found."
     (cond
-     ((member "FiraCode NF" (font-family-list))
-      (set-frame-font "FiraCode NF" nil t))
-     ((member "JetBrainsMono NF" (font-family-list))
-      (set-frame-font "JetBrainsMono NF" nil t))
-     ((member "DejaVuSansMono NF" (font-family-list))
-      (set-frame-font "DejaVuSansMono NF" nil t))
+     ((member "FiraCode Nerd Font" (font-family-list))
+      (set-frame-font "FiraCode Nerd Font" nil t))
+     ((member "JetBrainsMono Nerd Font" (font-family-list))
+      (set-frame-font "JetBrainsMono Nerd Font" nil t))
+     ((member "DejaVuSansMono Nerd Font" (font-family-list))
+      (set-frame-font "DejaVuSansMono Nerd Font" nil t))
      ((member "Courier New" (font-family-list))
       (set-frame-font "Courier New" nil t))))
   (run-at-time "4 sec" nil #'try-to-change-font)
