@@ -883,6 +883,15 @@ how useful and valuable this simple feature is.
     (olivetti-body-width 88))
 #+end_src
 
+***** title case
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  ;;; titlecase
+  ;; It turns out, capitalizing titles is hard.
+  ;; https://github.com/duckwork/titlecase.el
+  (use-package titlecase)
+#+end_src
+
 **** Meaningless Fun
 
 2048, but implemented entirely in Emacs!
