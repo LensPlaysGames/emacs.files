@@ -740,6 +740,14 @@ I used to use ~company-mode~ and activate it manually, but now I use corfu + cap
     ("\\.bnf\\'" . ebnf-mode))
 #+end_src
 
+***** GraphViz Dot
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  ;;; EBNF -- Extended Backus-Naur Form
+  ;; https://ppareit.github.io/graphviz-dot-mode/
+  (use-package graphviz-dot-mode
+    :ensure t)
+#+end_src
 
 **** A e s t h e t i c
 
