@@ -641,6 +641,46 @@ I used to use ~company-mode~ and activate it manually, but now I use corfu + cap
 
 **** Language Support
 
+***** tree-sitter
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  (setq treesit-language-source-alist
+        '((bash "https://github.com/tree-sitter/tree-sitter-bash")
+          (c "https://github.com/tree-sitter/tree-sitter-c")
+          (cmake "https://github.com/uyha/tree-sitter-cmake")
+          (commonlisp "https://github.com/theHamsta/tree-sitter-commonlisp")
+          (cpp "https://github.com/tree-sitter/tree-sitter-cpp")
+          (css "https://github.com/tree-sitter/tree-sitter-css")
+          (d "https://github.com/gdamore/tree-sitter-d")
+          (elisp "https://github.com/Wilfred/tree-sitter-elisp")
+          (gitattributes "https://github.com/ObserverOfTime/tree-sitter-gitattributes")
+          (gitignore "https://github.com/shunsambongi/tree-sitter-gitignore")
+          (glsl "https://github.com/theHamsta/tree-sitter-glsl")
+          (go "https://github.com/tree-sitter/tree-sitter-go")
+          (html "https://github.com/tree-sitter/tree-sitter-html")
+          (javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
+          (json "https://github.com/tree-sitter/tree-sitter-json")
+          (lua "https://github.com/Azganoth/tree-sitter-lua")
+          (make "https://github.com/alemuller/tree-sitter-make")
+          (markdown "https://github.com/ikatyang/tree-sitter-markdown")
+          (meson "https://github.com/Decodetalkers/tree-sitter-meson")
+          (ocaml "https://github.com/tree-sitter/tree-sitter-ocaml")
+          (pascal "https://github.com/Isopod/tree-sitter-pascal")
+          (perl "https://github.com/ganezdragon/tree-sitter-perl")
+          (python "https://github.com/tree-sitter/tree-sitter-python")
+          (rst "https://github.com/stsewd/tree-sitter-rst")
+          (rust "https://github.com/tree-sitter/tree-sitter-rust")
+          (toml "https://github.com/tree-sitter/tree-sitter-toml")
+          (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
+          (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
+          (wasm "https://github.com/wasm-lsp/tree-sitter-wasm")
+          (yaml "https://github.com/ikatyang/tree-sitter-yaml")
+          (zig "https://github.com/maxxnino/tree-sitter-zig")))
+
+  (defun treesit-setup ()
+    (interactive)
+    (mapc #'treesit-install-language-grammar (mapcar #'car treesit-language-source-alist)))
+#+end_src
+
 ***** Assembly
 
 #+begin_src emacs-lisp :mkdirp yes :tangle .emacs
