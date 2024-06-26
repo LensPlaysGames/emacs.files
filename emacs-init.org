@@ -855,6 +855,24 @@ Smoother scrolling in newer versions of Emacs.
     (keymap-global-set "M-v" 'pixel-scroll-interpolate-up))
 #+end_src
 
+***** Clang Format
+
+I don't like LLVM, but I do like well-formatted and consistent code
+within a project, soooo...
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  ;;; clang-format+
+  ;; Helpers to interact with and use clang-format from Emacs.
+  ;; https://github.com/SavchenkoValeriy/emacs-clang-format-plus
+  (use-package clang-format+
+    :custom
+    (clang-format+-context 'buffer)
+    :hook
+    (c-mode-common . clang-format+-mode)
+    (c-ts-mode . clang-format+-mode)
+    (c++-ts-mode-hook . clang-format+-mode))
+#+end_src
+
 ***** C++ Integer Qualifier Highlighting
 
 #+begin_src emacs-lisp :mkdirp yes :tangle .emacs
