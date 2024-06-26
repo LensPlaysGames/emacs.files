@@ -58,8 +58,8 @@ Execute source block under point in ~org-mode~ using ~org-babel~:
   ;; Backup current Emacs configuration (only things that may be over-written).
   (message "Backing up current config...")
   (let* ((time-string (format-time-string "%Y-%m-%d-%H-%M-%S"))
-     (backup-dir (expand-file-name time-string "backup"))
-     (custom-user-init-file (expand-file-name "my-init.el" user-emacs-directory)))
+         (backup-dir (expand-file-name time-string "backup"))
+         (custom-user-init-file (expand-file-name "my-init.el" user-emacs-directory)))
     (message "Backing up Emacs configuration to %s..." backup-dir)
     (make-directory backup-dir t)
     ;; The user init file isn't present on a fresh Emacs.
@@ -68,16 +68,16 @@ Execute source block under point in ~org-mode~ using ~org-babel~:
     (when (file-exists-p custom-user-init-file)
       (copy-file custom-user-init-file (expand-file-name "my-init.el" backup-dir) t))
     (copy-directory user-emacs-directory
-            (expand-file-name ".emacs.d" backup-dir)
-            nil t t))
+                    (expand-file-name ".emacs.d" backup-dir)
+                    nil t t))
   (message "Tangling into Elisp...")
   (let ((generated-files (append
-              (org-babel-tangle-file "my-init.org")
-              (org-babel-tangle-file "emacs-init.org")))
-    (generated-packages (mapcar (lambda (file-path) (car (org-babel-tangle-file file-path)))
-                    (directory-files "packages" t "\\.org$")))
-    (generated-themes (mapcar (lambda (file-path) (org-babel-tangle-file file-path))
-                  (directory-files "themes" t "\\.org$"))))
+                          (org-babel-tangle-file "my-init.org")
+                          (org-babel-tangle-file "emacs-init.org")))
+        (generated-packages (mapcar (lambda (file-path) (car (org-babel-tangle-file file-path)))
+                                    (directory-files "packages" t "\\.org$")))
+        (generated-themes (mapcar (lambda (file-path) (org-babel-tangle-file file-path))
+                                  (directory-files "themes" t "\\.org$"))))
     (message "Installing new configuration...")
 
     ;; Copy user init files.
@@ -90,35 +90,35 @@ Execute source block under point in ~org-mode~ using ~org-babel~:
       (make-directory (expand-file-name "lisp" user-emacs-directory)))
     (dolist (package (directory-files "packages" t "\\.el$"))
       (let ((package-install-path (expand-file-name
-                   (file-name-nondirectory package)
-                   (expand-file-name "lisp" user-emacs-directory))))
-    (copy-file package package-install-path t)
-    (byte-compile-file package-install-path)
-    ))
+                                   (file-name-nondirectory package)
+                                   (expand-file-name "lisp" user-emacs-directory))))
+        (copy-file package package-install-path t)
+        (byte-compile-file package-install-path)
+        ))
     (dolist (generated-package generated-packages)
       (when (file-exists-p generated-package)
-    (let ((package-install-path (expand-file-name
-                     (file-name-nondirectory generated-package)
-                     (expand-file-name "lisp" user-emacs-directory))))
-      (princ generated-package)
-      (copy-file generated-package package-install-path t)
-      (when (string-suffix-p ".el" package-install-path)
-        (byte-compile-file package-install-path))
-      )))
+        (let ((package-install-path (expand-file-name
+                                     (file-name-nondirectory generated-package)
+                                     (expand-file-name "lisp" user-emacs-directory))))
+          (princ generated-package)
+          (copy-file generated-package package-install-path t)
+          (when (string-suffix-p ".el" package-install-path)
+            (byte-compile-file package-install-path))
+          )))
 
     (message "Installing themes...")
     (dolist (theme (directory-files "themes" t "\\.el$"))
       (let ((theme-install-path (expand-file-name
-                 (file-name-nondirectory theme)
-                 user-emacs-directory)))
-    (copy-file theme theme-install-path t)))
+                                 (file-name-nondirectory theme)
+                                 user-emacs-directory)))
+        (copy-file theme theme-install-path t)))
     (dolist (generated-theme generated-themes)
       (when (file-exists-p generated-theme)
-    (let ((theme-install-path
-           (expand-file-name
-        (file-name-nondirectory generated-theme)
-        user-emacs-directory)))
-      (copy-file generated-theme theme-install-path t))))
+        (let ((theme-install-path
+               (expand-file-name
+                (file-name-nondirectory generated-theme)
+                user-emacs-directory)))
+          (copy-file generated-theme theme-install-path t))))
 
     (message "Cleaning generated files...")
     (dolist (generated-file (append generated-files generated-packages generated-themes))
