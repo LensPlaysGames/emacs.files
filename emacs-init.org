@@ -1157,3 +1157,16 @@ up, for example.
   ;; be folded
   (toggle-truncate-lines 1)
 #+end_src
+
+**** Disable Exit Footgun
+
+It's just too easy... If you wan't out, do =M-x sav-e C-RET=
+which is really =M-x save-buffers-kill-emacs C-RET=.
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  ;; It's just too easy... If you wan't out, do `M-x sav-e C-RET`
+  ;; which is really `M-x save-buffers-kill-emacs C-RET`.
+  (keymap-unset (current-global-map) "C-z" t)
+  (keymap-unset (current-global-map) "C-x C-z" t)
+#+end_src
+
