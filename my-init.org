@@ -106,7 +106,7 @@ type it into a source block exactly like the one seen below.
 
 #+begin_src emacs-lisp :mkdirp yes :tangle my-init.el
   (defun lens/c++-mode-hook ()
-    (setq-local c-mode-indent-offset 4)
+    (setq-local c-basic-offset 4)
     ;; This is used for both c-ts-mode and c++-ts-mode (should be called
     ;; c-ts-common-mode-indent-offset imo but whatever)
     (setq-local c-ts-mode-indent-offset 4))
@@ -115,8 +115,6 @@ type it into a source block exactly like the one seen below.
 #+end_src
 
 ** Org-mode LaTeX Preview Proper Size
-
-FIXME: This may have to be put in a use-package so that we wait until org-mode is actually loaded, IIRC.
 
 #+begin_src emacs-lisp :mkdirp yes :tangle my-init.el
   (use-package org

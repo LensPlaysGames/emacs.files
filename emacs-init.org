@@ -864,16 +864,26 @@ I don't like LLVM, but I do like well-formatted and consistent code
 within a project, soooo...
 
 #+begin_src emacs-lisp :mkdirp yes :tangle .emacs
-  ;;; clang-format+
-  ;; Helpers to interact with and use clang-format from Emacs.
-  ;; https://github.com/SavchenkoValeriy/emacs-clang-format-plus
-  (use-package clang-format+
-    :custom
-    (clang-format+-context 'buffer)
-    :hook
-    (c-mode-common . clang-format+-mode)
-    (c-ts-mode . clang-format+-mode)
-    (c++-ts-mode-hook . clang-format+-mode))
+  ;;; clang-format
+  (use-package clang-format)
+
+  (defun clang-format-buffer-before-save-hook ()
+    "Add a buffer local hook to 'before-save-hook' that runs clang-format
+  on the current buffer iff there is a \".clang-format\" file located"
+    (add-hook
+     'before-save-hook
+     ;; Lambda that clang-formats the current buffer iff there is a .clang-
+     ;; format file present in the current or parent directories.
+     (lambda ()
+       (when (locate-dominating-file "." ".clang-format")
+         (clang-format-buffer))
+       nil)
+     ;; Make hook buffer local
+     nil t))
+
+  (add-hook 'c-mode-common-hook 'clang-format-buffer-before-save-hook)
+  (add-hook 'c-ts-mode-hook 'clang-format-buffer-before-save-hook)
+  (add-hook 'c++-ts-mode-hook 'clang-format-buffer-before-save-hook)
 #+end_src
 
 ***** C++ Integer Qualifier Highlighting
