@@ -75,10 +75,40 @@ type it into a source block exactly like the one seen below.
   (run-at-time "4 sec" nil #'try-to-change-font)
 #+end_src
 
+** C Hook
+
+#+begin_src emacs-lisp :mkdirp yes :tangle my-init.el
+  (defun lens/c-mode-hook ()
+    ;; ```
+    ;; if (condition)
+    ;;   {
+    ;;     // ... body ...
+    ;;   }
+    ;; ```
+    ;; Turns the above into the following
+    ;; ```
+    ;; if (condition)
+    ;; {
+    ;;   // ... body ...
+    ;; }
+    ;; ```
+    (c-set-offset 'substatement-open 0)
+    ;; How many spaces to indent.
+    (setq-local c-basic-offset 2)
+    ;; This is used for both c-ts-mode and c++-ts-mode (should be called
+    ;; c-ts-common-mode-indent-offset imo but whatever)
+    (setq-local c-ts-mode-indent-offset 2))
+  (add-hook 'c-mode-hook 'lens/c-mode-hook)
+  (add-hook 'c-ts-mode-hook 'lens/c-mode-hook)
+#+end_src
+
 ** C++ Hook
 
 #+begin_src emacs-lisp :mkdirp yes :tangle my-init.el
   (defun lens/c++-mode-hook ()
+    (setq-local c-mode-indent-offset 4)
+    ;; This is used for both c-ts-mode and c++-ts-mode (should be called
+    ;; c-ts-common-mode-indent-offset imo but whatever)
     (setq-local c-ts-mode-indent-offset 4))
   (add-hook 'c++-mode-hook 'lens/c++-mode-hook)
   (add-hook 'c++-ts-mode-hook 'lens/c++-mode-hook)
