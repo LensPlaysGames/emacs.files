@@ -42,6 +42,9 @@ type it into a source block exactly like the one seen below.
   (bind-key "C-x 5 3" 'make-frame-on-monitor)
 
   ;; Move vertical window border left/right using keyboard.
+  ;; TODO: Somehow I lost these functions? I thought they were utility
+  ;; functions in emacs-init, buuuuut, here we are where they don't exist.
+  ;; Odd.
   (bind-key "C-M-z" 'move-border-left)
   (bind-key "C-M-x" 'move-border-right)
 
@@ -72,3 +75,22 @@ type it into a source block exactly like the one seen below.
   (run-at-time "4 sec" nil #'try-to-change-font)
 #+end_src
 
+** C++ Hook
+
+#+begin_src emacs-lisp :mkdirp yes :tangle my-init.el
+  (defun lens/c++-mode-hook ()
+    (setq-local c-ts-mode-indent-offset 4))
+  (add-hook 'c++-mode-hook 'lens/c++-mode-hook)
+  (add-hook 'c++-ts-mode-hook 'lens/c++-mode-hook)
+#+end_src
+
+** Org-mode LaTeX Preview Proper Size
+
+FIXME: This may have to be put in a use-package so that we wait until org-mode is actually loaded, IIRC.
+
+#+begin_src emacs-lisp :mkdirp yes :tangle my-init.el
+  (use-package org
+    :defer t
+    :config
+    (plist-put org-format-latex-options :scale 2.0))
+#+end_src

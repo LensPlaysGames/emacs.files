@@ -30,7 +30,7 @@ On Windows, use ~emacsclientw.exe~, and create a shortcut to it with the argumen
 
 I don't use this on my desktop, but on laptops I prefer this keybinding.
 
-I use Windows, so AutoHotkey seems like my best solution.
+I use Windows (again, laptop), so AutoHotkey seems like my best solution.
 
 See [[https://www.devdungeon.com/content/rebind-caps-lock-key-escapecontrol#toc-3][this page]] for help on other platforms.
 
@@ -39,6 +39,9 @@ Here's the autohotkey script I use.
   Capslock::LCtrl
 #+end_src
 
+On my desktop, I use a keyboard (technically two that work in tandem)
+loaded with the QMK firmware along with VIA support, so I have whatever
+button do whatever I want it to do.
 
 ** Installation
 
@@ -568,9 +571,9 @@ Exclude them by defining ~emacs-init/use-every-package~ to nil.
     :custom-face
     (fic-face
      ((t (:background
-          nil
+          unspecified
           :foreground
-          nil
+          unspecified
           :underline
           (:color "red" :style wave)
           )))))
