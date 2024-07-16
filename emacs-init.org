@@ -657,6 +657,7 @@ I used to use ~company-mode~ and activate it manually, but now I use corfu + cap
           (elisp "https://github.com/Wilfred/tree-sitter-elisp")
           (gitattributes "https://github.com/ObserverOfTime/tree-sitter-gitattributes")
           (gitignore "https://github.com/shunsambongi/tree-sitter-gitignore")
+          (glint "https://github.com/LensPlaysGames/tree-sitter-glint")
           (glsl "https://github.com/theHamsta/tree-sitter-glsl")
           (go "https://github.com/tree-sitter/tree-sitter-go")
           (html "https://github.com/tree-sitter/tree-sitter-html")
@@ -1121,6 +1122,10 @@ worked was in Emacs 28.
 
   ;; Always kill a running compilation with a new compilation.
   (setq compilation-always-kill t)
+
+  ;; Compilation Mode ANSI sequences
+  (add-hook 'compilation-filter-hook 'ansi-osc-compilation-filter)
+  (add-hook 'compilation-filter-hook 'ansi-color-compilation-filter)
 #+end_src
 
 **** Customize Emacs file backups
