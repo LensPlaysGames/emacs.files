@@ -327,6 +327,7 @@ manually in these org files, and for my code comments.
               (backward-sexp)))
           ;; Move behind opening parens/braces/quotes.
           (when (or (eq ?\( (char-before))
+                    (eq ?\" (char-before))
                     (eq ?\[ (char-before))
                     (eq ?\{ (char-before)))
             (backward-char))
