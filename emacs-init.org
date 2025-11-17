@@ -325,9 +325,14 @@ manually in these org files, and for my code comments.
             (if word
                 (backward-word)
               (backward-sexp)))
+          ;; Take into account "'" in the middle of words.
+          (when (eq ?\' (char-before))
+            (skip-chars-backward "a-zA-Z_'"))
           ;; Move behind opening parens/braces/quotes.
           (when (or (eq ?\( (char-before))
                     (eq ?\" (char-before))
+                    (eq ?\' (char-before))
+                    (eq ?` (char-before))
                     (eq ?\[ (char-before))
                     (eq ?\{ (char-before)))
             (backward-char))
@@ -421,6 +426,14 @@ to the global load path, meaning Elisp may be loaded from them.
   (scroll-bar-mode -1)
   (setq inhibit-splash-screen t)
   (setq use-file-dialog nil)
+#+end_src
+
+**** Set Custom Custom File
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  ;; Set Custom Custom File
+  (setf custom-file (expand-file-name "my-custom.el" user-emacs-directory))
+  (load custom-file)
 #+end_src
 
 **** Initialize Package Management
@@ -643,6 +656,16 @@ I used to use ~company-mode~ and activate it manually, but now I use corfu + cap
     (advice-add 'eglot-completion-at-point :around #'cape-wrap-buster))
 #+end_src
 
+**** Generic Yet Useful
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  ;;; tmr
+  ;; https://github.com/protesilaos/tmr
+  ;; NOTE: I prefer tmr-with-details
+  (use-package tmr
+    :defer t)
+#+end_src
+
 **** Language Support
 
 ***** tree-sitter
@@ -793,6 +816,20 @@ I used to use ~company-mode~ and activate it manually, but now I use corfu + cap
   (use-package graphviz-dot-mode
     :ensure t)
 #+end_src
+
+***** Ledger
+
+[[https://ledger-cli.org][Ledger, the CLI Finance Tool]]
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  ;;; Ledger mode -- The CLI Finance Tool
+  ;; https://github.com/ledger/ledger-mode
+  (use-package ledger-mode
+    :ensure t
+    :custom (ledger-highlight-xact-under-point nil))
+#+end_src
+
+
 
 **** A e s t h e t i c
 
@@ -964,6 +1001,17 @@ how useful and valuable this simple feature is.
   ;; https://github.com/duckwork/titlecase.el
   (use-package titlecase)
 #+end_src
+
+***** htmlize
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  ;;; htmlize
+  ;; Convert your current buffer into HTML, stylized to keep any decorations
+  ;; applied.
+  ;; https://github.com/emacsorphanage/htmlize
+  (use-package htmlize)
+#+end_src
+
 
 **** Meaningless Fun
 
