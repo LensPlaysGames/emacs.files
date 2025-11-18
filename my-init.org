@@ -63,15 +63,138 @@ type it into a source block exactly like the one seen below.
   ;; Try to use different default fonts.
   (defun try-to-change-font ()
     "Attempt to find fonts that I like, and use the first one found."
-    (cond
-     ((member "FiraCode NF" (font-family-list))
-      (set-frame-font "FiraCode NF" nil t))
-     ((member "JetBrainsMono NF" (font-family-list))
-      (set-frame-font "JetBrainsMono NF" nil t))
-     ((member "DejaVuSansMono NF" (font-family-list))
-      (set-frame-font "DejaVuSansMono NF" nil t))
-     ((member "Courier New" (font-family-list))
-      (set-frame-font "Courier New" nil t))))
+    (let ((fonts (delete-dups (mapcar #'downcase (font-family-list)))))
+      ;; These are ordered in terms of preference of font family.
+      ;; Ones that start with 'nil' are never used, and are simply here so that
+      ;; I don't download them to see if I like them all over again.
+      ;;
+      ;; For a lot of font families, I like the nerd font.
+      ;; For others, it ruins it.
+      ;; https://www.nerdfonts.com/#home
+      ;; https://github.com/ryanoasis/nerd-fonts
+      (cond
+       ;; Hasklig (Hasklug Nerd Font)
+       ;; NOTE: I like it. Easy on the eyes while still being readable without
+       ;; too much empty space.
+       ;; Neutral font.
+       ;; https://www.programmingfonts.org/#hasklig
+       ;; https://github.com/i-tu/Hasklig
+       ((member "hasklug nerd font" fonts)
+        (set-frame-font "hasklug nerd font" nil t))
+       ((member "hasklig" fonts)
+        (set-frame-font "hasklig" nil t))
+
+       ;; Recursive
+       ;; NOTE: I like it, although the letters feel "sharp" (like Fira Code).
+       ;; Heavy like Martian yet not overwhelming.
+       ;; I configured it MONO 1 CASL 0.75 WGHT 400 SLNT 0 CRSV 0.5
+       ;; Stylized font.
+       ;; https://www.recursive.design/
+       ;; https://github.com/arrowtype/recursive/
+       ((member "recursive" fonts)
+        (set-frame-font "recursive" nil t))
+
+       ;; Intel One Mono (Intone Mono Nerd Font)
+       ;; NOTE: VERY stylized. I don't dislike it. Reminds me of fonts used in
+       ;; Tolkien's books. Slightly wide, but good weight and space.
+       ;; Stylized font.
+       ;; https://www.programmingfonts.org/#intel-one-mono
+       ;; https://fonts.google.com/specimen/Intel+One+Mono
+       ;; https://github.com/intel/intel-one-mono
+       ((member "intone mono nerd font" fonts)
+        (set-frame-font "intone mono nerd font" nil t))
+       ((member "intel one mono" fonts)
+        (set-frame-font "intel one mono" nil t))
+
+       ;; Martian Mono
+       ;; NOTE: VERY heavy. Great character shape. READABLE! I really like it.
+       ;; I can see this being useful on a small screen.
+       ;; Neutral font.
+       ;; https://www.programmingfonts.org/#martian-mono
+       ((member "martianmono nerd font" fonts)
+        (set-frame-font "martianmono nerd font" nil t))
+       ((member "martian mono" fonts)
+        (set-frame-font "martian mono" nil t))
+
+       ;; Fira Code
+       ;; NOTE: Kind of spaced out, but not as bad as a lot of fonts. Good weight
+       ;; and character shape.
+       ;; Stylized neutral font.
+       ;; https://www.programmingfonts.org/#firacode
+       ;; https://firacode.org/
+       ;; https://github.com/tonsky/FiraCode
+       ;; https://fonts.google.com/specimen/Fira+Code
+       ((member "firacode nerd font mono" fonts)
+        (set-frame-font "firacode nerd font mono" nil t))
+       ((member "fira code" fonts)
+        (set-frame-font "fira code" nil t))
+
+       ;; Atkinson Hyperlegible
+       ;; NOTE: Too much empty space. Not the worst.
+       ;; Neutral font.
+       ;; https://www.programmingfonts.org/#atkinson-hyperlegible
+       ;; https://fonts.google.com/specimen/Atkinson+Hyperlegible
+       ;; https://github.com/googlefonts/atkinson-hyperlegible
+       ;; https://www.brailleinstitute.org/freefont/
+       ((member "atkynsonmono nerd font" fonts)
+        (set-frame-font "atkynsonmono nerd font" nil t))
+       ((member "atkinson hyperlegible mono" fonts)
+        (set-frame-font "atkinson hyperlegible mono" nil t))
+
+       ;; Commit Mono
+       ;; NOTE: Just slightly too heavy. Not bad at all.
+       ;; Neutral font.
+       ;; https://www.programmingfonts.org/#commit-mono
+       ;; https://commitmono.com/
+       ;; https://github.com/eigilnikolajsen/commit-mono
+       ((member "commitmono nerd font" fonts)
+        (set-frame-font "commitmono nerd font" nil t))
+       ((member "commit mono" fonts)
+        (set-frame-font "commit mono" nil t))
+
+       ;; Cousine
+       ;; NOTE: I prefer Commit Mono over Cousine; both very similar, yet Commit
+       ;; has "rounder edges", I feel. Overall not bad. Like Commit, a little too
+       ;; heavy.
+       ;; Neutral font.
+       ;; https://www.programmingfonts.org/#cousine
+       ;; https://fonts.google.com/specimen/Cousine
+       (nil (member "cousine nerd font" fonts)
+            (set-frame-font "cousine nerd font" nil t))
+       (nil (member "cousine" fonts)
+            (set-frame-font "cousine" nil t))
+
+       ;; Overpass Mono
+       ;; NOTE: I like it, but it's too light.
+       ;; https://www.programmingfonts.org/#overpass
+       ;; https://overpassfont.org/
+       ((member "overpass mono" fonts)
+        (set-frame-font "overpass mono" nil t))
+
+       ;; Source Code Pro
+       ;; NOTE: I used it for a while, it's not bad.
+       ((member "source code pro" fonts)
+        (set-frame-font "source code pro" nil t))
+
+       ;; IBM Plex Mono (Blex Mono Nerd Font)
+       ;; NOTE: Weight just barely acceptable (on the heavy side), weirdly sharp/
+       ;; thin corners ('n', 'h', 'r').
+       ;; Stylized font.
+       ;; https://www.programmingfonts.org/#plex-mono
+       (nil (member "blexmono nerd font" fonts)
+            (set-frame-font "blexmono nerd font" nil t))
+       (nil (member "ibm plex mono" fonts)
+            (set-frame-font "ibm plex mono" nil t))
+
+       ;; Space Mono
+       ;; NOTE: Not great. Too tall, too much empty space. Parentheses too round.
+       ;; Braces too flat.
+       ;; https://www.programmingfonts.org/#space
+       ;; https://fonts.google.com/specimen/Space+Mono
+       (nil (member "space mono nerd font" fonts)
+            (set-frame-font "space mono nerd font" nil t))
+       (nil (member "space mono" fonts)
+            (set-frame-font "space mono" nil t)))))
   (run-at-time "4 sec" nil #'try-to-change-font)
 #+end_src
 
