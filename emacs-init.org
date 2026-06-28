@@ -6,6 +6,8 @@
 #+options: num:nil toc:nil
 #+toc: headlines 3
 
+* Emacs Configuration
+
 ** EmacsClient
 
 While everything possible is done to reduce startup/load times,
@@ -25,12 +27,11 @@ This works amazingly, allowing for near-instantaneous opening of Emacs after the
 
 On Windows, use ~emacsclientw.exe~, and create a shortcut to it with the arguments listed above.
 
-
 ** CapsLock to Ctrl rebind
 
 I don't use this on my desktop, but on laptops I prefer this keybinding.
 
-I use Windows (again, laptop), so AutoHotkey seems like my best solution.
+On Windows, AutoHotkey seems like the best solution.
 
 See [[https://www.devdungeon.com/content/rebind-caps-lock-key-escapecontrol#toc-3][this page]] for help on other platforms.
 
@@ -183,6 +184,29 @@ TODO: Write LISP to restore from a backup.
 **** Utility Functions
 
 These are some very helpful LISP functions that I use.
+
+***** Setup buffer-local revert hook
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+    (defun apply-colors-on-revert-hook ()
+      (ansi-color-apply-on-region (point-min) (point-max) 'preserve)
+      (auto-revert-mode 1))
+
+    (defun apply-colors-on-revert ()
+      (interactive)
+      (auto-revert-mode 1)
+      (add-hook 'after-revert-hook
+                #'apply-colors-on-revert-hook
+                nil
+                'local))
+
+  (defun apply-colors-on-revert-stop! ()
+      (interactive)
+      (auto-revert-mode -1)
+      (remove-hook 'after-revert-hook
+                   #'apply-colors-on-revert-hook
+                   'local))
+#+end_src
 
 ***** Promote/Demote TeX headings
 
@@ -530,6 +554,14 @@ Exclude them by defining ~emacs-init/use-every-package~ to nil.
       c++-mode
       cmake-mode)
      . eglot-ensure)
+    :config
+    (add-to-list 'eglot-server-programs
+                 `((c-mode c++-mode objc-mode cuda-mode)
+                   . ("clangd"
+                      "--clang-tidy"
+                      "--header-insertion=never"
+                      "--completion-style=detailed"
+                      ,(format "-j=%s" (min 8 (1- (num-processors)))))))
     :custom
     (eglot-send-changes-idle-time 0))
 
@@ -829,7 +861,18 @@ I used to use ~company-mode~ and activate it manually, but now I use corfu + cap
     :custom (ledger-highlight-xact-under-point nil))
 #+end_src
 
+**** Writing
 
+***** Screenplays via Fountain Mode
+
+#+begin_src emacs-lisp :mkdirp yes :tangle .emacs
+  ;;; fountain-mode
+  ;; https://github.com/rnkn/fountain-mode
+  ;; https://fountain-mode.org/
+  (use-package fountain-mode
+    :mode
+    ("\\.fountain\\'" . fountain-mode))
+#+end_src
 
 **** A e s t h e t i c
 
@@ -1117,7 +1160,18 @@ worked was in Emacs 28.
   (blink-cursor-mode 0)
 
   ;; Disable built-in version control (Magit is enough)
+  ;; NOTE: Severely messes with 'project.el', so we must add a function to
+  ;; 'project-find-functions'.
   (setq vc-handled-backends nil)
+  (defun lens/find-project-root--magit (dir)
+    "For use as a hook within 'project-find-functions'."
+    (when (featurep 'magit)
+      (let ((root (magit-toplevel dir)))
+        (when root
+          (list 'vc 'Git root)))))
+  (with-eval-after-load 'project
+    (add-hook 'project-find-functions
+              #'lens/find-project-root--magit))
 #+end_src
 
 **** Cursor customization

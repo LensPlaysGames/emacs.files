@@ -123,6 +123,16 @@
    `(font-lock-property-face      ((t (:foreground , *lensor-bright-yellow*))))
    `(font-lock-variable-name-face ((t (:foreground , *lensor-light-blue-green*))))
 
+   ;; TODO: outlines (fix terrible clown colors)
+   ;; `(outline-1 ((nil . (:weight ultra-bold))))
+   ;; `(outline-2 ((nil . (:weight bold))))
+   ;; `(outline-3 ((nil . (:weight bold))))
+   ;; `(outline-4 ((nil . (:weight semi-bold))))
+   ;; `(outline-5 ((nil . (:weight semi-bold))))
+   ;; `(outline-6 ((nil . (:weight semi-bold))))
+   ;; `(outline-7 ((nil . (:weight semi-bold))))
+   ;; `(outline-8 ((nil . (:weight semi-bold))))
+
    ;;; Button and links
    `(link         ((t (:underline t :foreground , *link*))))
    `(link-visited ((t (:underline t :foreground , *link-visited*))))
