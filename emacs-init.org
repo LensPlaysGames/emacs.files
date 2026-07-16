@@ -420,6 +420,43 @@ filename; this one is, while still adhering to ISO 8601 specification.
         timestamp-string)))
 #+end_src
 
+***** Handle =:<line>:<column>= When Opening Files
+
+#+begin_src emacs-lisp
+  (defun find-file-noselect--advice-around-with-line-number
+      (orig-fun filename &rest args)
+    "Handle trailing `:line:column` when opening files.
+  Written as an advice around 'find-file-noselect'."
+    (save-match-data
+      (let* ((matched (string-match "^\\(.*\\):\\([0-9]+\\):\\([0-9]+\\):?$"
+                                    filename))
+             (line-number (and matched
+                               (match-string 2 filename)
+                               (string-to-number (match-string 2 filename))))
+             (column-number (and matched
+                                 (match-string 3 filename)
+                                 (string-to-number (match-string 3 filename))))
+             (filename (if matched
+                           (match-string 1 filename)
+                         filename))
+
+             ;; Call the underlying function
+             (buf (apply orig-fun filename args)))
+
+        (when (or line-number column-number)
+          (with-current-buffer buf
+            (goto-char (point-min))
+            (when line-number
+              (forward-line (1- line-number)))
+            (when column-number
+              (forward-char (1- column-number)))))
+
+        ;; Return the buffer for other things to use
+        buf)))
+  (advice-add #'find-file-noselect
+              :around #'find-file-noselect--advice-around-with-line-number)
+#+end_src
+
 ***** TODO Snake Case to Camel Case Converter
 
 **** Open New Frames in Fullscreen
