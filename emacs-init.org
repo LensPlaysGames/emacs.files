@@ -723,6 +723,7 @@ I used to use ~company-mode~ and activate it manually, but now I use corfu + cap
           (make "https://github.com/alemuller/tree-sitter-make")
           (markdown "https://github.com/ikatyang/tree-sitter-markdown")
           (meson "https://github.com/Decodetalkers/tree-sitter-meson")
+          (nu "https://github.com/nushell/tree-sitter-nu")
           (ocaml "https://github.com/tree-sitter/tree-sitter-ocaml")
           (pascal "https://github.com/Isopod/tree-sitter-pascal")
           (perl "https://github.com/ganezdragon/tree-sitter-perl")
@@ -739,6 +740,11 @@ I used to use ~company-mode~ and activate it manually, but now I use corfu + cap
   (defun treesit-setup ()
     (interactive)
     (mapc #'treesit-install-language-grammar (mapcar #'car treesit-language-source-alist)))
+
+  ;;; Nu -- Language of Nushell
+  ;; https://github.com/herbertjones/nushell-ts-mode
+  ;; MELPA
+  (use-package nushell-ts-mode)
 #+end_src
 
 ***** Assembly
