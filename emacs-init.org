@@ -585,12 +585,17 @@ Exclude them by defining ~emacs-init/use-every-package~ to nil.
   ;; Language server protocol interface.
   ;; Simple and fairly non-intrusive.
   ;; https://github.com/joaotavora/eglot
+  (defun lens/eglot-ensure ()
+    "Like 'eglot-ensure', but actually ensures project root is findable,
+    relevant packages loaded, etc."
+    (require 'project)
+    (require 'magit)
+    (eglot-ensure))
   (use-package eglot
     :hook
-    ((c-mode
-      c++-mode
-      cmake-mode)
-     . eglot-ensure)
+    ((c-mode c++-mode
+             cmake-mode)
+     . #'lens/eglot-ensure)
     :config
     (add-to-list 'eglot-server-programs
                  `((c-mode c++-mode objc-mode cuda-mode)
